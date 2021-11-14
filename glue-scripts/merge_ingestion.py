@@ -5,6 +5,7 @@ from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from pyspark.sql.functions import *
+from pyspark.sql.types import *
 from watcherlogger.logger import watcherlogger
 from datetime import datetime
 import boto3
@@ -28,7 +29,26 @@ class RawCleanDataSource(object):
         
         schema = schema_obj.get_schema()
         print(schema)
-        df = spark.read.format(self.params["source_format"]).option("header","true").schema(schema).load(self.params["input_data_path"])
+        src_path = self.params["input_data_path"]
+        
+        #Get latest partition
+        s3 = boto3.resource('s3')
+        s3_bucket_index = src_path.replace("s3://","").find("/")
+        s3_bucket = src_path[5:s3_bucket_index+5]
+        s3_key = src_path[s3_bucket_index+6:]
+        bucket = s3.Bucket(s3_bucket)
+        objs = list(bucket.objects.filter(Prefix=s3_key))
+        latest = lambda a, b: "s3://"+a+"/"+b[:b.rfind("/",0,len(b))]
+        objs = [latest(obj.bucket_name, obj.key) for obj in objs]
+        print(objs)
+        latest_partition = ""
+        for obj in objs:
+            if obj > latest_partition:
+                latest_partition = obj
+            
+        print(latest_partition)
+        df = spark.read.format(self.params["source_format"]).option("header","true").schema(schema).load(latest_partition)
+        print("read latest data")
         return df
     
     
@@ -48,8 +68,8 @@ class MergeDataSink(object):
             bucket = s3.Bucket(s3_bucket)
             objs = list(bucket.objects.filter(Prefix=s3_key))
             if len(objs) <= 0:
-                raise ClientError()
-        except ClientError:
+                raise Exception("No path exist")
+        except Exception:
             target_path = "notexist"
             print("not exist")
         if target_path ==  "exist":   
