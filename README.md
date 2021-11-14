@@ -13,3 +13,19 @@ Add below params to the glue jobs
 --TARGET_FORMAT - Target format of data
 --GLUE_DB_NAME - Glue database name within table creation
 --GLUE_TABLE_NAME - Glue table name for the table creation
+
+In case if target is partitioned:
+--TARGET_PARTITION_KEY - Key of target partition
+
+In case of jdbc source ingestion pass below params:
+
+--INPUT_JDBC_URL
+--INPUT_JDBC_SECRET
+
+In case of jdbc target ingestion pass below params:
+
+--OUTPUT_JDBC_URL
+--OUTPUT_JDBC_SECRET
+
+For trusted ingestion with merge approach:
+--COMPOSITE_KEY - Key for joining and performing upsert

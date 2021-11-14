@@ -19,7 +19,7 @@ class RawDataSource(object):
         self.params = params
         print(self.params)
         
-    def read_raw_data(self):
+    def read_source_data(self):
         schema_obj = Schema()
         print(self.params["input_schema_path"])
         schema_obj.set_location(self.params["input_schema_path"])
@@ -37,6 +37,7 @@ class RawDataSink(object):
     def __init__(self, params):
         self.params = params
     def write_target_data(self, df):
+        spark.conf.set("spark.sql.sources.partitionOverwriteMode","dynamic")
         schema_obj = Schema()
         schema_obj.set_location(self.params["output_schema_path"])
         schema = schema_obj.get_schema()
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     log_data = context
     print("Read source")
     #Read source data
-    source = RawDataSource(read_params).read_raw_data()
+    source = RawDataSource(read_params).read_source_data()
     #Added audit fields
     source_with_audit = AuditFields().add_audit(source)
     
