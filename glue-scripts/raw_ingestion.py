@@ -18,6 +18,7 @@ class RawDataSource(object):
     def __init__(self, params):
         self.params = params
         print(self.params)
+        
     def read_raw_data(self):
         schema_obj = Schema()
         print(self.params["input_schema_path"])
@@ -26,17 +27,21 @@ class RawDataSource(object):
         schema = schema_obj.get_schema()
         print(schema)
         df = spark.read.format(self.params["source_format"]).option("header","true").schema(schema).load(self.params["input_data_path"])
+        df = self.add_partition_raw_data(df)
         return df
-
-class DataSink(object):
+    
+    def add_partition_raw_data(self, df):
+        return df.withColumn("partition_load_dt_tmstmp",lit(datetime.now().strftime("%Y%m%d_%H%M%S")))
+        
+class RawDataSink(object):
     def __init__(self, params):
         self.params = params
     def write_target_data(self, df):
         schema_obj = Schema()
         schema_obj.set_location(self.params["output_schema_path"])
         schema = schema_obj.get_schema()
-        df = spark.createDataFrame(df.rdd,schema=schema)
-        df.write.format(self.params["target_format"]).mode("overwrite").option("path",self.params["output_data_path"]).saveAsTable(self.params["catalog_db"]+"."+self.params["catalog_table"])
+        # df = spark.createDataFrame(df.rdd,schema=schema)
+        df.write.partitionBy("partition_load_dt_tmstmp").format(self.params["target_format"]).mode("overwrite").option("path",self.params["output_data_path"]).saveAsTable(self.params["catalog_db"]+"."+self.params["catalog_table"])
         
 class AuditFields(object):
     def __init__(self):
@@ -74,5 +79,5 @@ if __name__ == "__main__":
     source_with_audit = AuditFields().add_audit(source)
     
     #Write target data
-    DataSink(write_params).write_target_data(source_with_audit)
+    RawDataSink(write_params).write_target_data(source_with_audit)
     
