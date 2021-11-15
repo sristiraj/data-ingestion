@@ -39,7 +39,7 @@ class RawCleanDataSource(object):
         bucket = s3.Bucket(s3_bucket)
         objs = list(bucket.objects.filter(Prefix=s3_key))
         latest = lambda a, b: "s3://"+a+"/"+b[:b.rfind("/",0,len(b))]
-        objs = [latest(obj.bucket_name, obj.key) for obj in objs]
+        objs = [latest(obj.bucket_name, obj.key) for obj in objs if "$folder" not in obj.key ]
         print(objs)
         latest_partition = ""
         for obj in objs:

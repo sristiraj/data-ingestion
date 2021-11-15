@@ -9,7 +9,7 @@ from watcherlogger.logger import watcherlogger
 from datetime import datetime
 
 
-args = getResolvedOptions(sys.argv, ["JOB_NAME","INPUT_DATA_PATH","OUTPUT_DATA_PATH","GLUE_DB_NAME","GLUE_TABLE_NAME","INPUT_SCHEMA_PATH","OUTPUT_SCHEMA_PATH","SOURCE_FORMAT","TARGET_FORMAT"])
+args = getResolvedOptions(sys.argv, ["JOB_NAME","INPUT_DATA_PATH","OUTPUT_DATA_PATH","GLUE_DB_NAME","GLUE_TABLE_NAME","INPUT_SCHEMA_PATH","OUTPUT_SCHEMA_PATH","SOURCE_FORMAT","TARGET_FORMAT","SOURCE_ARCHIVE_PATH"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
@@ -63,14 +63,38 @@ class AuditFields(object):
             fn = getattr(self, col_name)
             df = fn(df,col)
         return df    
-        
+
+class ArchiveData(object):
+    def __init__(self, params):
+        self.params = params
+    def archive_data(self):
+        #Get latest partition
+        print("Start archive source data")
+        src_path = self.params["input_data_path"]
+        s3 = boto3.resource('s3')
+        s3_bucket_index = src_path.replace("s3://","").find("/")
+        s3_bucket = src_path[5:s3_bucket_index+5]
+        s3_key = src_path[s3_bucket_index+6:]
+        print(s3_bucket)
+        print(s3_key)
+        bucket = s3.Bucket(s3_bucket)
+        objs = list(bucket.objects.filter(Prefix=s3_key))
+        print(objs)
+        for obj in objs:
+            bucket_name = obj.bucket_name
+            key = obj.key
+            print(bucket_name)
+            print(key)
+            s3.meta.client.copy({'Bucket':bucket_name,'Key':key}, bucket_name, 'archive/'+key)
+            s3.Object(bucket_name, key).delete()
+    
 if __name__ == "__main__":
     
     context = {"job_name":args["JOB_NAME"], "service_arn":"SLRLoadMetric", "module_name":"SLR", "job_type":"full"}
     logger = watcherlogger().Builder().setLogLevel(logging.INFO).setStreamNamePrefix(context["module_name"]).getOrCreate()
     print("Started Job")
     #Separate read and write params
-    read_params = {"input_data_path":args["INPUT_DATA_PATH"],"input_schema_path":args["INPUT_SCHEMA_PATH"],"source_format":args["SOURCE_FORMAT"]}
+    read_params = {"input_data_path":args["INPUT_DATA_PATH"],"input_schema_path":args["INPUT_SCHEMA_PATH"],"source_format":args["SOURCE_FORMAT"],"archive_path":args["SOURCE_ARCHIVE_PATH"]}
     write_params = {"output_data_path":args["OUTPUT_DATA_PATH"], "output_schema_path":args["OUTPUT_SCHEMA_PATH"],"catalog_db":args["GLUE_DB_NAME"],"catalog_table":args["GLUE_TABLE_NAME"],"target_format":args["TARGET_FORMAT"]}
     log_data = context
     print("Read source")
@@ -82,3 +106,5 @@ if __name__ == "__main__":
     #Write target data
     RawDataSink(write_params).write_target_data(source_with_audit)
     
+    #Archive data complete
+    ArchiveData(read_params).archive_data()
