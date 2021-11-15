@@ -85,8 +85,9 @@ class ArchiveData(object):
             key = obj.key
             print(bucket_name)
             print(key)
-            s3.meta.client.copy({'Bucket':bucket_name,'Key':key}, bucket_name, 'archive/'+key)
-            s3.Object(bucket_name, key).delete()
+            if "." in key:
+                s3.meta.client.copy({'Bucket':bucket_name,'Key':key}, bucket_name, 'archive/'+key)
+                s3.Object(bucket_name, key).delete()
     
 if __name__ == "__main__":
     
