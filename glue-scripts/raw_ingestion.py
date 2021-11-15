@@ -26,7 +26,7 @@ class RawDataSource(object):
         
         schema = schema_obj.get_schema()
         print(schema)
-        df = spark.read.format(self.params["source_format"]).option("header","true").schema(schema).load(self.params["input_data_path"])
+        df = spark.read.format(self.params["source_format"]).option("delimiter","\t").option("header","true").schema(schema).load(self.params["input_data_path"])
         df = self.add_partition_raw_data(df)
         return df
     
