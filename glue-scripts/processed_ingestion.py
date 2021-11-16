@@ -47,17 +47,17 @@ class SQLTransform(object):
     def _schema_data(self):
         location_type = self._schema_uri_type()
         if location_type == "local":
-            with open(self.location, "rb") as f:
+            with open(self.params["sql_path"], "rb") as f:
                 data = f.read()
         elif location_type == "s3":
             s3 = boto3.client("s3")
-            s3_bucket_index = self.location.replace("s3://","").find("/")
-            s3_bucket = self.location[5:s3_bucket_index+5]
-            s3_key = self.location[s3_bucket_index+6:]
+            s3_bucket_index = self.params["sql_path"].replace("s3://","").find("/")
+            s3_bucket = self.params["sql_path"][5:s3_bucket_index+5]
+            s3_key = self.params["sql_path"][s3_bucket_index+6:]
             obj = s3.get_object(Bucket=s3_bucket, Key=s3_key)            
             data = obj["Body"].read()
         elif location_type == "dbfs":
-            with open(self.location.replace("dbfs:","/dbfs")) as f:
+            with open(self.params["sql_path"].replace("dbfs:","/dbfs")) as f:
                 data = f.read()
         else:
           data = None
