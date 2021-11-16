@@ -5,7 +5,7 @@ from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from pyspark.sql.functions import *
-from watcherlogger.logger import watcherlogger
+# from watcherlogger.logger import watcherlogger
 from datetime import datetime
 from awsglue.dynamicframe import DynamicFrame
 
@@ -34,11 +34,11 @@ class SQLTransform(object):
     def __init__(self, params):
         self.params = params
     def _schema_uri_type(self):
-        if self.sql_path.startswith("file://"):
+        if self.params["sql_path"].startswith("file://"):
             sql_path_type = "local"
-        elif self.sql_path.startswith("s3://"):
+        elif self.params["sql_path"].startswith("s3://"):
             sql_path_type = "s3"
-        elif self.sql_path.startswith("dbfs:/"):
+        elif self.params["sql_path"].startswith("dbfs:/"):
             sql_path_type = "dbfs"
         else:
             raise InvalidSchemaLocation()
@@ -119,7 +119,7 @@ class AuditFields(object):
 if __name__ == "__main__":
     
     context = {"job_name":args["JOB_NAME"], "service_arn":"SLRLoadMetric", "module_name":"SLR", "job_type":"full"}
-    logger = watcherlogger().Builder().setLogLevel(logging.INFO).setStreamNamePrefix(context["module_name"]).getOrCreate()
+#     logger = watcherlogger().Builder().setLogLevel(logging.INFO).setStreamNamePrefix(context["module_name"]).getOrCreate()
     print("Started Job")
     #Separate read and write params
     read_params = {"input_data_path":args["INPUT_DATA_PATH"],"input_schema_path":args["INPUT_SCHEMA_PATH"],"source_format":args["SOURCE_FORMAT"],"sql_path":args["SQL_PATH"]}
