@@ -55,7 +55,7 @@ class SQLTransform(object):
             s3_bucket = self.params["sql_path"][5:s3_bucket_index+5]
             s3_key = self.params["sql_path"][s3_bucket_index+6:]
             obj = s3.get_object(Bucket=s3_bucket, Key=s3_key)            
-            data = obj["Body"].read()
+            data = obj["Body"].read().decode('utf-8') 
         elif location_type == "dbfs":
             with open(self.params["sql_path"].replace("dbfs:","/dbfs")) as f:
                 data = f.read()
