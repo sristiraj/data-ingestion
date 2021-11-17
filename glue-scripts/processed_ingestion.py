@@ -65,9 +65,8 @@ class SQLTransform(object):
 
     def transform(self):
         sql_query = self._schema_data()
+        spark.catalog.setCurrentDatabase("data_mart")
         df = spark.sql(sql_query)
-        df = AuditFields().drop_audit_fields(df)
-        df = AuditFields().add_audit(df)
         return df
 class ProcessedDataSink(object):
     def __init__(self, params):
@@ -93,7 +92,7 @@ class ProcessedDataSink(object):
         pwd = "{}".format(connection_properties['PASSWORD'])
 
         dyf = DynamicFrame.fromDF(df, glueContext, "dyf")
-        datasink1 = glueContext.write_dynamic_frame.from_jdbc_conf(frame = dyf, catalog_connection = self.params["glue_conn_name"], connection_options = {"dbtable": self.params["catalog_table"], "database": self.params["ccatalog_db"]}, redshift_tmp_dir = self.params["output_tmp_path"], transformation_ctx = "datasink1")
+        datasink1 = glueContext.write_dynamic_frame.from_jdbc_conf(frame = dyf, catalog_connection = self.params["glue_conn_name"], connection_options = {"dbtable": self.params["catalog_table"], "database": self.params["catalog_db"]}, redshift_tmp_dir = self.params["output_tmp_path"], transformation_ctx = "datasink1")
 class AuditFields(object):
     def __init__(self):
         self.audit_fields = ["audit_created_tmstmp","audit_updated_tmstmp","audit_created_by","audit_updated_by","audit_data_source"]
