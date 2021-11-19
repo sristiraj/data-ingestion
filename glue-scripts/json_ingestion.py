@@ -110,7 +110,7 @@ class ArchiveData(object):
     
 if __name__ == "__main__":
     
-    context = {"job_name":args["JOB_NAME"], "service_arn":"SLRLoadMetric", "module_name":"SLR", "job_type":"full"}
+    context = {"job_name":args["JOB_NAME"], "service_arn":"JSONBurst", "module_name":"Json", "job_type":"full"}
     logger = watcherlogger().Builder().setLogLevel(logging.INFO).setStreamNamePrefix(context["module_name"]).getOrCreate()
     print("Started Job")
     #Separate read and write params
