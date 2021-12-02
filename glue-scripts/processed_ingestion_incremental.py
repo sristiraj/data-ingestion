@@ -66,8 +66,8 @@ class SQLTransform(object):
     def transform(self):
         sql_query = self._schema_data()
         print(sql_query)
-        df = spark.read.format("parquet").load(args["INPUT_DATA_PATH"])
-        df.createOrReplaceTempView("temptable")
+        #df = spark.read.format("parquet").load(args["INPUT_DATA_PATH"])
+        #df.createOrReplaceTempView("temptable")
         df = spark.sql(sql_query)
         print("Query successful")
         return df
