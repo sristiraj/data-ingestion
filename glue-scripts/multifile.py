@@ -36,12 +36,14 @@ def fun(f):
   file_orig=f[0]
   filepath = f[0]
   data = f[1]
-  data = re.sub(r"\n,",",",data )
-  data = re.sub(r",\n",",",data )
+#   data = re.sub(r"\n,",",",data )
+#   data = re.sub(r",\n",",",data )
+  df = pd.read_csv(StringIO(data),header=[0],delimiter=",")
+  df = df.replace(r'\n','', regex=True) 	
   s3 = boto3.resource('s3')
   outpath = filepath.replace(input_data+"/"+input_prefix,output_data+"/"+output_prefix)
   object = s3.Object(output_data, outpath.replace("s3://","").replace(output_data+"/",""))
-  object.put(Body=data)
+  object.put(Body=df.to_string(index=False))
   return (filepath,data)
 
 
