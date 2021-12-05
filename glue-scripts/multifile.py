@@ -13,7 +13,7 @@ from awsglue.dynamicframe import DynamicFrame
 from pyspark.sql.functions import  concat_ws, lit, col, trim, regexp_replace
 import logging
 import boto3
-
+import csv
 
 
 args = getResolvedOptions(sys.argv,["INPUT_DATA_PATH","OUTPUT_DATA_PATH","INPUT_FOLDER_PREFIX","OUTPUT_FOLDER_PREFIX"])
@@ -32,19 +32,19 @@ logger.info("ARGUMENTS PASSED")
 in_bucket = input_data
 
 def fun(f):
-  print(f)
   file_orig=f[0]
   filepath = f[0]
   data = f[1]
-#   data = re.sub(r"\n,",",",data )
-#   data = re.sub(r",\n",",",data )
   df = pd.read_csv(StringIO(data),header=[0],delimiter=",")
-  df = df.replace(r'\n','', regex=True) 	
+  df = df.replace(r'\n','', regex=True) 
+  df = df.to_csv(header=True, index=False, quoting = csv.QUOTE_ALL).strip('\n').split('\n')
+  df_string = '\r\n'.join(df)
+  df_bytes = df_string.encode('utf8')
   s3 = boto3.resource('s3')
   outpath = filepath.replace(input_data+"/"+input_prefix,output_data+"/"+output_prefix)
   object = s3.Object(output_data, outpath.replace("s3://","").replace(output_data+"/",""))
-  object.put(Body=df.to_string(index=False))
-  return (filepath,data)
+  object.put(Body=df_bytes)
+  return (filepath)
 
 
 
@@ -61,3 +61,4 @@ rdd_all = sc.wholeTextFiles(",".join(list_of_files))
 # rdd_out = rdd_all.foreach(fun)
 rows = rdd_all.collect()
 rdd_out = rdd_all.map(fun)  
+print(rdd_out.collect())
