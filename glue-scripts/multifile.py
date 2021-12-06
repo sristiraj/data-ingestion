@@ -39,7 +39,7 @@ def fun(f):
   s3 = boto3.resource('s3')
   outpath = filepath.replace(input_data+"/"+input_prefix,output_data+"/"+output_prefix)
   object = s3.Object(output_data, outpath.replace("s3://","").replace(output_data+"/",""))
-  dfreader = pd.read_csv(StringIO(data),header=[0],delimiter=",",chunksize=1000)
+  dfreader = pd.read_csv(StringIO(data),header=[0],delimiter=",",chunksize=1000,low_memory=False)
   for chunk in dfreader:
       df = chunk.replace(r'\n','', regex=True) 
       df = df.to_csv(header=True, index=False, quoting = csv.QUOTE_ALL).strip('\n').split('\n')
