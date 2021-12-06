@@ -43,8 +43,8 @@ def fun(f):
   for chunk in dfreader:
       df = chunk.replace(r'\n','', regex=True) 
       df = df.to_csv(header=True, index=False, quoting = csv.QUOTE_ALL).strip('\n').split('\n')
-      df_string = '\r\n'.join(df)
-      df_bytes = df_string.encode('utf8')
+      df = '\r\n'.join(df)
+      df_bytes = df.encode('utf8')
       object.put(Body=df_bytes)
   return (filepath)
 
