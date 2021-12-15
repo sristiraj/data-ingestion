@@ -52,7 +52,7 @@ class SQLTransform(object):
 
     def transform(self):
         sql_query = self._schema_data()
-        spark.catalog.setCurrentDatabase("data_mart")
+#         spark.catalog.setCurrentDatabase("data_mart")
         df = spark.sql(sql_query)
         return df
 class ProcessedDataSink(object):
