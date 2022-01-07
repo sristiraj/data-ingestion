@@ -23,7 +23,6 @@ class TrustedDataSource(object):
     
     
     def read_source_data_jdbc(self, tbl):
-        print(self.params["input_schema_path"])
         client = boto3.client('glue', region_name=AWS_REGION)
         response = client.get_connection(Name=self.params["glue_conn_name"])
         connection_properties = response['Connection']['ConnectionProperties']
