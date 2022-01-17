@@ -69,7 +69,7 @@ class ProcessedDataSink(object):
     def write_target_data_jdbc(self, df):
         dyf = DynamicFrame.fromDF(df, glueContext, "dyf")
         post_query = '''truncate table {};insert into {}(date_wid,date,date_of_week,is_business_day,is_federal_holiday,holiday_description) select cast(stg.date_wid as bigint) as date_wid, stg.date, stg.date_of_week, 
-                        case when lower(to_char(stg.date,'DAY')) = 'saturday' or  lower(to_char(stg.date,'DAY')) = 'sunday' or  federal_holiday.date is not null then 'Y' else 'N' end is_business_day,
+                        case when lower(to_char(stg.date,'DAY')) = 'saturday' or  lower(to_char(stg.date,'DAY')) = 'sunday' or  federal_holiday.date is not null then 'N' else 'Y' end is_business_day,
                         case when federal_holiday.date is not null then 'Y' else 'N' end is_federal_holiday,
                         federal_holiday.holiday_description FROM 
                         {} as stg LEFT OUTER JOIN {} as federal_holiday ON stg.date=federal_holiday.date;commit;truncate table {};'''.format(self.params["catalog_table"], self.params["catalog_table"], self.params["catalog_stg_table"], self.params["catalog_holiday_table"], self.params["catalog_stg_table"])
