@@ -88,12 +88,12 @@ title as activity,
 std_usage_code_2 as ae,
 reversal_code as rv,
 fnd.fund_short_name as fund,
-sum(case when upper(con_src_grp.group_name)='EMPLOYEE' THEN val_2 ELSE null END) as employee,
-sum(case when upper(con_src_grp.group_name)='AUTOMATIC' THEN val_2 ELSE null END) as automatic,
-sum(case when upper(con_src_grp.group_name)='MATCH' THEN val_2 ELSE null END) as matching,
-NVL(sum(case when upper(con_src_grp.group_name)='EMPLOYEE' THEN val_2 ELSE null END),0)+
+cast(sum(case when upper(con_src_grp.group_name)='EMPLOYEE' THEN val_2 ELSE null END) as decimal(10,2)) as employee,
+cast(sum(case when upper(con_src_grp.group_name)='AUTOMATIC' THEN val_2 ELSE null END) as decimal(10,2))  as automatic,
+cast(sum(case when upper(con_src_grp.group_name)='MATCH' THEN val_2 ELSE null END)as decimal(10,2))  as matching,
+cast(NVL(sum(case when upper(con_src_grp.group_name)='EMPLOYEE' THEN val_2 ELSE null END),0)+
 NVL(sum(case when upper(con_src_grp.group_name)='AUTOMATIC' THEN val_2 ELSE null END),0) +
-NVL(sum(case when upper(con_src_grp.group_name)='MATCH' THEN val_2 ELSE null END),0) as row_total
+NVL(sum(case when upper(con_src_grp.group_name)='MATCH' THEN val_2 ELSE null END),0) as decimal(10,2))  as row_total
 --cast(null as column_total,
 --null as contribution_total_as_date
 from staging.ahbr_5001_title stg left outer join datamart.lkup_fund_description fnd
