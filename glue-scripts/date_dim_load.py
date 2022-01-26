@@ -11,10 +11,11 @@ import boto3
 import logging
 
 
-args = getResolvedOptions(sys.argv, ["JOB_NAME","OUTPUT_TMP_PATH","REDSHIFT_DB_NAME","REDSHIFT_TABLE_NAME","GLUE_CONN_NAME","REDSHIFT_STG_NAME","REDSHIFT_HOLIDAY_TABLE","SQL_PATH"])
+args = getResolvedOptions(sys.argv, ["JOB_NAME","OUTPUT_TMP_PATH","REDSHIFT_DB_NAME","REDSHIFT_TABLE_NAME","GLUE_CONN_NAME","REDSHIFT_STG_NAME","REDSHIFT_HOLIDAY_TABLE","SQL_PATH","MONTH_SQL_PATH","REDSHIFT_MONTH_TABLE_NAME","REDSHIFT_MONTH_STG_NAME"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
+logger = logging.getLogger(__name__)
 
 class SQLTransform(object):
     def __init__(self, params):
@@ -60,23 +61,68 @@ class ProcessedDataSink(object):
     def __init__(self, params):
         self.params = params
     
-    def write_target_data(self, df):
-        spark.conf.set("spark.sql.sources.partitionOverwriteMode","dynamic")
-        # df = spark.createDataFrame(df.rdd,schema=schema)
-        # df.write.format("parquet").mode("overwrite").option("path",self.params["output_data_path"]).saveAsTable(self.params["catalog_db"]+"."+self.params["catalog_table"])
-        df.write.format("parquet").mode("overwrite").option("path",self.params["output_data_path"]).save()
-    
-    def write_target_data_jdbc(self, df):
+    def write_target_data_jdbc(self, df, table, post_query):
         dyf = DynamicFrame.fromDF(df, glueContext, "dyf")
-        date_dim = self.params["catalog_table"]
-        stg_date_dim = self.params["catalog_stg_table"]
-        federal_holiday = self.params["catalog_holiday_table"]
-        
-        post_query = f'''truncate table {date_dim};insert into {date_dim}(date_id,date_wid,date,day_of_week,next_business_date, day_after_business_date, is_business_day,is_federal_holiday,holiday_description) select x.date_id, x.date_wid, x.date, x.day_of_week, x.next_business_date, 
+
+        print(f"Perform post stg load operation: {post_query}".format())
+        datasink1 = glueContext.write_dynamic_frame.from_jdbc_conf(frame = dyf, catalog_connection = self.params["glue_conn_name"], connection_options = {"dbtable": self.params["redshift_table"], "database": self.params["redshift_db"],"postactions":post_query}, redshift_tmp_dir = self.params["output_tmp_path"], transformation_ctx = "datasink1")
+    
+
+if __name__ == "__main__":
+    
+    context = {"job_name":args["JOB_NAME"], "service_arn":"date lkp loader", "module_name":"AHBR", "job_type":"full"}
+#     logger = watcherlogger().Builder().setLogLevel(logging.INFO).setStreamNamePrefix(context["module_name"]).getOrCreate()
+    
+    #Retrieve params
+    month_dim = args["REDSHIFT_MONTH_TABLE_NAME"]
+    stg_month_dim = args["REDSHIFT_MONTH_STG_NAME"]
+    output_tmp_path = args["OUTPUT_TMP_PATH"]
+    redshift_db = args["REDSHIFT_DB_NAME"]
+    date_dim = args["REDSHIFT_TABLE_NAME"]
+    stg_date_dim = args["REDSHIFT_STG_NAME"]
+    glue_conn_name = args["GLUE_CONN_NAME"]
+    federal_holiday = args["REDSHIFT_HOLIDAY_TABLE"]
+    month_sparksql_s3_path = args["MONTH_SQL_PATH"]
+    date_sparksql_s3_path = args["SQL_PATH"]
+    
+    print("Started Job")
+    log_data = context
+    log_data["status"] = "Start"
+    
+    logger.info(log_data)
+    #Separate read and write params for month table load
+    read_params_month = {"sql_path":month_sparksql_s3_path}
+    write_params_month = {"output_tmp_path":output_tmp_path,"redshift_db":redshift_db,"redshift_table":stg_month_dim, "glue_conn_name":glue_conn_name}
+    
+    print("Read  month source")
+    
+    #Read source data using sql and transform
+    source = SQLTransform(read_params_month).transform()
+    
+    date_load_post_query = f'''truncate table {month_dim};insert into {month_dim}(month_id, month_description, end_of_month_date, month_code) select stg.month_id, stg.month_description, stg.end_of_month_date, stg.month_code
+    from {stg_month_dim} as stg;commit;truncate table {stg_month_dim};'''.format()
+
+    print("Writing target")
+    #Write target data
+    ProcessedDataSink(write_params_month).write_target_data_jdbc(source, stg_month_dim, date_load_post_query)
+    
+    
+    #Separate read and write params for date table load
+    read_params_date = {"sql_path":date_sparksql_s3_path}
+    write_params_date = {"output_tmp_path":output_tmp_path,"redshift_db":redshift_db,"redshift_table":stg_date_dim, "glue_conn_name":glue_conn_name}
+    
+    print("Loading complete for month table")
+    
+    print("Read  date source")
+    
+    #Read source data using sql and transform
+    source = SQLTransform(read_params_date).transform()
+    
+    date_load_post_query = f'''truncate table {date_dim};insert into {date_dim}(date_id,date_wid,date,day_of_week,next_business_date, day_after_business_date, is_business_day,is_federal_holiday,holiday_description,month_id) select x.date_id, x.date_wid, x.date, x.day_of_week, x.next_business_date, 
 (select min(c.date) from {stg_date_dim} c LEFT OUTER JOIN {federal_holiday} as fh2 ON c.date=fh2.date where 
   (case when lower(to_char(c.date,'DAY')) = 'saturday' or  lower(to_char(c.date,'DAY')) = 'sunday' or  fh2.date is not null then 'N' else 'Y' end ) = 'Y' and 
   c.date>x.next_business_date) day_after_business_date,
-  is_business_day, is_federal_holiday, holiday_description from (
+  x.is_business_day, x.is_federal_holiday, x.holiday_description,mnth.month_id from (
 select cast(stg.date_id as bigint) as date_id, cast(stg.date_wid as bigint) as date_wid, stg.date, stg.day_of_week, 
 (select min(b.date) from {stg_date_dim} b LEFT OUTER JOIN {federal_holiday} as fh1 ON b.date=fh1.date where 
   (case when lower(to_char(b.date,'DAY')) = 'saturday' or  lower(to_char(b.date,'DAY')) = 'sunday' or  fh1.date is not null then 'N' else 'Y' end ) = 'Y' and 
@@ -84,27 +130,14 @@ select cast(stg.date_id as bigint) as date_id, cast(stg.date_wid as bigint) as d
 case when lower(to_char(stg.date,'DAY')) = 'saturday' or  lower(to_char(stg.date,'DAY')) = 'sunday' or  federal_holiday.date is not null then 'N' else 'Y' end is_business_day,
 case when federal_holiday.date is not null then 'Y' else 'N' end is_federal_holiday,
 federal_holiday.holiday_description FROM 
-{stg_date_dim} as stg LEFT OUTER JOIN {federal_holiday} as federal_holiday ON stg.date=federal_holiday.date) x;commit;truncate table {stg_date_dim};'''.format()
+{stg_date_dim} as stg LEFT OUTER JOIN {federal_holiday} as federal_holiday ON stg.date=federal_holiday.date) x left join {month_dim} mnth on to_char(x.date,'YYYYMM')=mnth.month_code;commit;truncate table {stg_date_dim};'''.format()
 
-        print(post_query)
-        datasink1 = glueContext.write_dynamic_frame.from_jdbc_conf(frame = dyf, catalog_connection = self.params["glue_conn_name"], connection_options = {"dbtable": self.params["catalog_stg_table"], "database": self.params["catalog_db"],"postactions":post_query}, redshift_tmp_dir = self.params["output_tmp_path"], transformation_ctx = "datasink1")
-
-if __name__ == "__main__":
-    
-    context = {"job_name":args["JOB_NAME"], "service_arn":"sample_loader", "module_name":"Sample", "job_type":"full"}
-#     logger = watcherlogger().Builder().setLogLevel(logging.INFO).setStreamNamePrefix(context["module_name"]).getOrCreate()
-    print("Started Job")
-    #Separate read and write params
-    read_params = {"sql_path":args["SQL_PATH"]}
-    write_params = {"output_tmp_path":args["OUTPUT_TMP_PATH"],"catalog_db":args["REDSHIFT_DB_NAME"],"catalog_table":args["REDSHIFT_TABLE_NAME"], "catalog_stg_table":args["REDSHIFT_STG_NAME"],"glue_conn_name":args["GLUE_CONN_NAME"],"catalog_holiday_table":args["REDSHIFT_HOLIDAY_TABLE"]}
-    # write_params = {"output_tmp_path":args["OUTPUT_TMP_PATH"],"catalog_db":args["REDSHIFT_DB_NAME"],"catalog_table":args["REDSHIFT_TABLE_NAME"], "glue_conn_name":args["GLUE_CONN_NAME"]}
-    log_data = context
-    print("Read source")
-    
-    #Read source data using sql and transform
-    source = SQLTransform(read_params).transform()
-    
     print("Writing target")
     #Write target data
-    ProcessedDataSink(write_params).write_target_data_jdbc(source)
+    ProcessedDataSink(write_params_date).write_target_data_jdbc(source, stg_date_dim, date_load_post_query)
+    
+    print("Loading complete for date table")
+   
+    log_data["status"] = "success"
+    logger.info(log_data)
     
