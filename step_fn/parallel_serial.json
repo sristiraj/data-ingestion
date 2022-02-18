@@ -1,0 +1,70 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "Parallel",
+  "States": {
+    "Parallel": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "Glue StartJobRun",
+          "States": {
+            "Glue StartJobRun": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "generate_PDF"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Glue StartJobRun (1)",
+          "States": {
+            "Glue StartJobRun (1)": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "generate_PDF"
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "Parallel (1)"
+    },
+    "Parallel (1)": {
+      "Type": "Parallel",
+      "End": true,
+      "Branches": [
+        {
+          "StartAt": "Glue StartJobRun (2)",
+          "States": {
+            "Glue StartJobRun (2)": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "generate_PDF"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Glue StartJobRun (3)",
+          "States": {
+            "Glue StartJobRun (3)": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "generate_PDF"
+              },
+              "End": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}
