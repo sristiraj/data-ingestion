@@ -1,0 +1,1036 @@
+{
+  "name": "MyClass",
+  "type": "record",
+  "namespace": "com.acme.avro",
+  "fields": [
+    {
+      "name": "TBAMessage",
+      "type": {
+        "name": "TBAMessage",
+        "type": "record",
+        "fields": [
+          {
+            "name": "header",
+            "type": {
+              "name": "header",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "platformInternalId",
+                  "type": "string"
+                },
+                {
+                  "name": "domains",
+                  "type": "string"
+                },
+                {
+                  "name": "subtopic",
+                  "type": "string"
+                },
+                {
+                  "name": "clinetId",
+                  "type": "string"
+                },
+                {
+                  "name": "isDataChangeInitiatedByPerson",
+                  "type": "string"
+                },
+                {
+                  "name": "schemaName",
+                  "type": "string"
+                },
+                {
+                  "name": "nationalTaxId",
+                  "type": "string"
+                },
+                {
+                  "name": "nationalTaxIdType",
+                  "type": "string"
+                },
+                {
+                  "name": "lastName",
+                  "type": "string"
+                },
+                {
+                  "name": "platformExternalId",
+                  "type": "string"
+                },
+                {
+                  "name": "systemInstanceId",
+                  "type": "string"
+                },
+                {
+                  "name": "globalPersonIdentifier",
+                  "type": "string"
+                },
+                {
+                  "name": "employmentStatus",
+                  "type": "string"
+                },
+                {
+                  "name": "roleType",
+                  "type": "string"
+                },
+                {
+                  "name": "firstName",
+                  "type": "string"
+                },
+                {
+                  "name": "gender",
+                  "type": "string"
+                },
+                {
+                  "name": "nationalTaxIdCountry",
+                  "type": "string"
+                },
+                {
+                  "name": "sourceSystemExtractionTimestamp",
+                  "type": "string"
+                },
+                {
+                  "name": "zipcode",
+                  "type": "string"
+                },
+                {
+                  "name": "workerId",
+                  "type": "string"
+                },
+                {
+                  "name": "bodyVersion",
+                  "type": "string"
+                },
+                {
+                  "name": "platformType",
+                  "type": "string"
+                },
+                {
+                  "name": "topic",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "login",
+            "type": {
+              "name": "login",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "temporaryPasswordDelivery",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "contact",
+            "type": {
+              "name": "contact",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "phones",
+                  "type": {
+                    "type": "array",
+                    "items": {
+                      "name": "phones_record",
+                      "type": "record",
+                      "fields": [
+                        {
+                          "name": "isMobile",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "effectiveFrom",
+                          "type": "string"
+                        },
+                        {
+                          "name": "phoneType",
+                          "type": "string"
+                        },
+                        {
+                          "name": "phoneTypeDescription",
+                          "type": "string"
+                        },
+                        {
+                          "name": "effectiveUntil",
+                          "type": "string"
+                        },
+                        {
+                          "name": "phoneId",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isPhoneBad",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "isHome",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "isWork",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "phoneNumber",
+                          "type": "string"
+                        },
+                        {
+                          "name": "phoneNumberFormattedCode",
+                          "type": "string"
+                        },
+                        {
+                          "name": "phoneNumberFormatted",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isPreferred",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "isOutboundVoiceMessageEnabled",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isFax",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "extension",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "emails",
+                  "type": {
+                    "type": "array",
+                    "items": {
+                      "name": "emails_record",
+                      "type": "record",
+                      "fields": [
+                        {
+                          "name": "effectiveUntil",
+                          "type": "string"
+                        },
+                        {
+                          "name": "effectiveFrom",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isEmailBad",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "isWork",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "emailAddress",
+                          "type": "string"
+                        },
+                        {
+                          "name": "emailId",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isPreferred",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "emailType",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isHome",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "emailTypeDescription",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "postalAddresses",
+                  "type": {
+                    "type": "array",
+                    "items": {
+                      "name": "postalAddresses_record",
+                      "type": "record",
+                      "fields": [
+                        {
+                          "name": "effectiveUntil",
+                          "type": "string"
+                        },
+                        {
+                          "name": "effectiveFrom",
+                          "type": "string"
+                        },
+                        {
+                          "name": "stateDescription",
+                          "type": "string"
+                        },
+                        {
+                          "name": "addressLine5",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isWork",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "state",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isPreferred",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "county",
+                          "type": "string"
+                        },
+                        {
+                          "name": "addressType",
+                          "type": "string"
+                        },
+                        {
+                          "name": "countryDescription",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isTemp",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "addressLine3",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isHome",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "city",
+                          "type": "string"
+                        },
+                        {
+                          "name": "addressTypeDescription",
+                          "type": "string"
+                        },
+                        {
+                          "name": "addressLine4",
+                          "type": "string"
+                        },
+                        {
+                          "name": "zipcode",
+                          "type": "string"
+                        },
+                        {
+                          "name": "country",
+                          "type": "string"
+                        },
+                        {
+                          "name": "isAddressBad",
+                          "type": "boolean"
+                        },
+                        {
+                          "name": "addressLine2",
+                          "type": "string"
+                        },
+                        {
+                          "name": "addressLine1",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "isDirectDepositOnFile",
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          {
+            "name": "personInstitutionRelationships",
+            "type": {
+              "name": "personInstitutionRelationships",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "institutionRelationships",
+                  "type": {
+                    "type": "array",
+                    "items": "string"
+                  }
+                },
+                {
+                  "name": "sourceSchemaName",
+                  "type": "string"
+                },
+                {
+                  "name": "platformInternalId",
+                  "type": "string"
+                },
+                {
+                  "name": "normalizedClientId",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "benefitsWorkerAttributes",
+            "type": {
+              "type": "array",
+              "items": {
+                "name": "benefitsWorkerAttributes_record",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "sourceSchemaName",
+                    "type": "string"
+                  },
+                  {
+                    "name": "benefitsCurrentEmploymentStatuses",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "benefitsCurrentEmploymentStatuses_record",
+                        "type": "record",
+                        "fields": [
+                          {
+                            "name": "categoryId",
+                            "type": "int"
+                          },
+                          {
+                            "name": "beginDate",
+                            "type": "string"
+                          },
+                          {
+                            "name": "endDate",
+                            "type": "string"
+                          },
+                          {
+                            "name": "value",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "name": "benefitsCurrentOrganizationCodes",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "benefitsCurrentOrganizationCodes_record",
+                        "type": "record",
+                        "fields": [
+                          {
+                            "name": "beginDate",
+                            "type": "string"
+                          },
+                          {
+                            "name": "endDate",
+                            "type": "string"
+                          },
+                          {
+                            "name": "value",
+                            "type": "string"
+                          },
+                          {
+                            "name": "organizationId",
+                            "type": "int"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "name": "normalizedClientId",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "person",
+            "type": {
+              "name": "person",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "firstName",
+                  "type": "string"
+                },
+                {
+                  "name": "middleName",
+                  "type": "string"
+                },
+                {
+                  "name": "gender",
+                  "type": "string"
+                },
+                {
+                  "name": "nationalTaxIdCountry",
+                  "type": "string"
+                },
+                {
+                  "name": "preferredLocale",
+                  "type": "string"
+                },
+                {
+                  "name": "maritalStatus",
+                  "type": "string"
+                },
+                {
+                  "name": "deathDate",
+                  "type": "string"
+                },
+                {
+                  "name": "nationalTaxId",
+                  "type": "string"
+                },
+                {
+                  "name": "nationalTaxIdType",
+                  "type": "string"
+                },
+                {
+                  "name": "lastName",
+                  "type": "string"
+                },
+                {
+                  "name": "title",
+                  "type": "string"
+                },
+                {
+                  "name": "suffix",
+                  "type": "string"
+                },
+                {
+                  "name": "birthDate",
+                  "type": "string"
+                },
+                {
+                  "name": "primaryLanguage",
+                  "type": "string"
+                },
+                {
+                  "name": "countryRecordingStatus",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "worker",
+            "type": {
+              "name": "worker",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "pays",
+                  "type": {
+                    "type": "array",
+                    "items": {
+                      "name": "pays_record",
+                      "type": "record",
+                      "fields": [
+                        {
+                          "name": "payGroupDescription",
+                          "type": "string"
+                        },
+                        {
+                          "name": "totalPayAmount",
+                          "type": "double"
+                        },
+                        {
+                          "name": "payGroupFrequency",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payGroupShortDescription",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payGroupFrequencyLabel",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payGroupLabel",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payGroupType",
+                          "type": "string"
+                        },
+                        {
+                          "name": "sourceSystemPayGroupId",
+                          "type": "int"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "payRollFrequencies",
+                  "type": {
+                    "type": "array",
+                    "items": {
+                      "name": "payRollFrequencies_record",
+                      "type": "record",
+                      "fields": [
+                        {
+                          "name": "payRollFrequencyCode",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payRollGroupShortDescription",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payRollFrequencyFactor",
+                          "type": "double"
+                        },
+                        {
+                          "name": "payRollFrequencyId",
+                          "type": "int"
+                        },
+                        {
+                          "name": "payRollFrequencyHierarchy",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payRollType",
+                          "type": "string"
+                        },
+                        {
+                          "name": "payRollGroupDescription",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "workerRole",
+                  "type": {
+                    "name": "workerRole",
+                    "type": "record",
+                    "fields": [
+                      {
+                        "name": "isVIP",
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "retirementDate",
+                  "type": "string"
+                },
+                {
+                  "name": "hireDate",
+                  "type": "string"
+                },
+                {
+                  "name": "isTerminated",
+                  "type": "string"
+                },
+                {
+                  "name": "employerName",
+                  "type": "string"
+                },
+                {
+                  "name": "originalHireDate",
+                  "type": "string"
+                },
+                {
+                  "name": "workerId",
+                  "type": "string"
+                },
+                {
+                  "name": "workerType",
+                  "type": "string"
+                },
+                {
+                  "name": "isOnLeave",
+                  "type": "string"
+                },
+                {
+                  "name": "isDataHRVerified",
+                  "type": "string"
+                },
+                {
+                  "name": "currentEmploymentStatus",
+                  "type": {
+                    "name": "currentEmploymentStatus",
+                    "type": "record",
+                    "fields": [
+                      {
+                        "name": "employmentStatusEffectiveDate",
+                        "type": "string"
+                      },
+                      {
+                        "name": "employmentStatusCode",
+                        "type": "string"
+                      },
+                      {
+                        "name": "employmentStatusDescription",
+                        "type": "string"
+                      },
+                      {
+                        "name": "employmentStatusFullDescription",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "terminationDate",
+                  "type": "string"
+                },
+                {
+                  "name": "isHighlyCompensatedEmployee",
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          {
+            "name": "personRelationships",
+            "type": {
+              "name": "personRelationships",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "sourceSchemaName",
+                  "type": "string"
+                },
+                {
+                  "name": "platformInternalId",
+                  "type": "string"
+                },
+                {
+                  "name": "normalizedClientId",
+                  "type": "string"
+                },
+                {
+                  "name": "relationships",
+                  "type": {
+                    "type": "array",
+                    "items": {
+                      "name": "relationships_record",
+                      "type": "record",
+                      "fields": [
+                        {
+                          "name": "studentCode",
+                          "type": "string"
+                        },
+                        {
+                          "name": "basicInformation",
+                          "type": {
+                            "type": "array",
+                            "items": {
+                              "name": "basicInformation_record",
+                              "type": "record",
+                              "fields": [
+                                {
+                                  "name": "firstName",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "middleName",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "gender",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "nationalTaxIdCountry",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "deathDate",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "nationalTaxId",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "nationalTaxIdType",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "lastName",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "title",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "suffix",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "birthDate",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "fullName",
+                                  "type": "string"
+                                },
+                                {
+                                  "name": "contactInformation",
+                                  "type": {
+                                    "type": "array",
+                                    "items": {
+                                      "name": "contactInformation_record",
+                                      "type": "record",
+                                      "fields": [
+                                        {
+                                          "name": "sourceSchemaName",
+                                          "type": "string"
+                                        },
+                                        {
+                                          "name": "emails",
+                                          "type": {
+                                            "type": "array",
+                                            "items": "string"
+                                          }
+                                        },
+                                        {
+                                          "name": "postalAddresses",
+                                          "type": {
+                                            "type": "array",
+                                            "items": "string"
+                                          }
+                                        },
+                                        {
+                                          "name": "normalizedClientId",
+                                          "type": "string"
+                                        },
+                                        {
+                                          "name": "phones",
+                                          "type": {
+                                            "type": "array",
+                                            "items": "string"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "name": "disabilityCode",
+                          "type": "string"
+                        },
+                        {
+                          "name": "relationshipPlatformInternalId",
+                          "type": "int"
+                        },
+                        {
+                          "name": "relationshipSequence",
+                          "type": "int"
+                        },
+                        {
+                          "name": "medicareHealthInsuranceClaimNumber",
+                          "type": "string"
+                        },
+                        {
+                          "name": "relationshipType",
+                          "type": "string"
+                        },
+                        {
+                          "name": "medicarePartAEndDate",
+                          "type": "string"
+                        },
+                        {
+                          "name": "medicarePartBEndDate",
+                          "type": "string"
+                        },
+                        {
+                          "name": "relationshipId",
+                          "type": "string"
+                        },
+                        {
+                          "name": "medicarePartDEndDate",
+                          "type": "string"
+                        },
+                        {
+                          "name": "additionalAttributes",
+                          "type": {
+                            "type": "array",
+                            "items": "string"
+                          }
+                        },
+                        {
+                          "name": "medicarePartABeginDate",
+                          "type": "string"
+                        },
+                        {
+                          "name": "relationshipCode",
+                          "type": "string"
+                        },
+                        {
+                          "name": "medicareEligibility",
+                          "type": "string"
+                        },
+                        {
+                          "name": "medicarePartBBeginDate",
+                          "type": "string"
+                        },
+                        {
+                          "name": "medicarePartDBeginDate",
+                          "type": "string"
+                        },
+                        {
+                          "name": "fullTimeStudentMaximumAge",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "personAttributes",
+            "type": {
+              "type": "array",
+              "items": {
+                "name": "personAttributes_record",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "isDeathCertificateReceived",
+                    "type": "string"
+                  },
+                  {
+                    "name": "sourceSchemaName",
+                    "type": "string"
+                  },
+                  {
+                    "name": "additionalAttributes",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "additionalAttributes_record",
+                        "type": "record",
+                        "fields": [
+                          {
+                            "name": "fieldName",
+                            "type": "string"
+                          },
+                          {
+                            "name": "fieldValue",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "name": "normalizedClientId",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "preferences",
+            "type": {
+              "type": "array",
+              "items": {
+                "name": "preferences_record",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "communicationPreferences",
+                    "type": {
+                      "type": "array",
+                      "items": {
+                        "name": "communicationPreferences_record",
+                        "type": "record",
+                        "fields": [
+                          {
+                            "name": "benefitCommunicationPreference",
+                            "type": "string"
+                          },
+                          {
+                            "name": "hasPersonSubscribedForTextMessages",
+                            "type": "boolean"
+                          },
+                          {
+                            "name": "advocacyCommunicationPreference",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "personBenefitAccountRelationships",
+            "type": {
+              "type": "array",
+              "items": {
+                "name": "personBenefitAccountRelationships_record",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "originatingPersonName",
+                    "type": "string"
+                  },
+                  {
+                    "name": "platformInternalId",
+                    "type": "string"
+                  },
+                  {
+                    "name": "originatingPersonInternalId",
+                    "type": "string"
+                  },
+                  {
+                    "name": "isSharedAccessEligible",
+                    "type": "boolean"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "timestamp",
+      "type": "string"
+    },
+    {
+      "name": "version",
+      "type": "string"
+    }
+  ]
+}
