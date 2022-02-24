@@ -1,0 +1,19 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "BatchExecuteStatement",
+  "States": {
+    "BatchExecuteStatement": {
+      "Type": "Task",
+      "End": true,
+      "Parameters": {
+        "ClusterIdentifier":""
+        "Database": "MyData",
+        "DbUser":"username",
+        "Sqls": [
+          "update accss","update accss1"
+        ]
+      },
+      "Resource": "arn:aws:states:::aws-sdk:redshiftdata:batchExecuteStatement"
+    }
+  }
+}
