@@ -10,7 +10,7 @@ current_date as update_date,
 cast(null as string) as participant_name,
 rt.tbamessage_header_nationaltaxid ssn,
 rt.tbamessage_person_birthdate as birth_date,
-cast(round(months_between(current_timestamp(), rt.tbamessage_person_birthdate)/12,2) as long) as age,
+cast(round(months_between(current_date(), rt.tbamessage_person_birthdate)/12,2) as long) as age,
 case   tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_organizationid 
 WHEN 8337 THEN tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_value
 WHEN 8347 THEN tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_value ELSE null END department_code,
