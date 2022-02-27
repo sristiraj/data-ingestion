@@ -99,7 +99,7 @@ class ProcessedIncrementalDataSink(object):
             update_join_clause += "t1."+key+"="+"t2."+key+" and "
         update_join_clause +=  "1=1;"
         insert_stg_query = "insert into {} select * from {};commit;truncate table {};end;".format(self.params["catalog_table"],self.params["stg_table"],self.params["stg_table"])
-        pre_query=pre_update_query+update_join_clause+insert_stg_query+"end;"
+        pre_query=pre_update_query+update_join_clause+insert_stg_query
         print(pre_query)
         datasink1 = glueContext.write_dynamic_frame.from_jdbc_conf(frame = dyf, catalog_connection = self.params["glue_conn_name"], connection_options = {"dbtable": self.params["stg_table"], "database": self.params["catalog_db"], "postactions":pre_query}, redshift_tmp_dir = self.params["output_tmp_path"], transformation_ctx = "datasink1")
         
