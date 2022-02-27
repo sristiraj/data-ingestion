@@ -9,7 +9,7 @@ current_date as update_date,
 null as participant_name,
 rt.tbamessage_header_nationaltaxid ssn,
 rt.tbamessage_person_birthdate as birth_date,
-DATEDIFF(YEAR, sysdate, rt.tbamessage_person_birthdate) as age,
+DATEDIFF(sysdate, rt.tbamessage_person_birthdate) as age,
 case   tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_organizationid 
 WHEN 8337 THEN tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_value
 WHEN 8347 THEN tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_value ELSE null END department_code,
