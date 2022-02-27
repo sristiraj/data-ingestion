@@ -97,11 +97,11 @@ class ProcessedIncrementalDataSink(object):
         pre_update_query="begin;update {} t1  set current_indicator=0 , record_end_date = current_date select from {} t2 where ".format(self.params["catalog_table"],self.params["stg_table"])
         for key in composite_key:
             update_join_clause += "t1."+key+"="+"t2."+key+" and "
-        update_join_clause +=  "1=1;end;"
-        insert_stg_query = "begin;insert into {} select * from {};commit;truncate table {};end;".format(self.params["catalog_table"],self.params["stg_table"],self.params["stg_table"])
-        pre_query=pre_update_query+update_join_clause+"end;"
+        update_join_clause +=  "1=1;"
+        insert_stg_query = "insert into {} select * from {};commit;truncate table {};end;".format(self.params["catalog_table"],self.params["stg_table"],self.params["stg_table"])
+        pre_query=pre_update_query+update_join_clause+insert_stg_query+"end;"
         print(pre_query)
-        datasink1 = glueContext.write_dynamic_frame.from_jdbc_conf(frame = dyf, catalog_connection = self.params["glue_conn_name"], connection_options = {"dbtable": self.params["stg_table"], "database": self.params["catalog_db"],"preactions":pre_query, "postactions":insert_stg_query}, redshift_tmp_dir = self.params["output_tmp_path"], transformation_ctx = "datasink1")
+        datasink1 = glueContext.write_dynamic_frame.from_jdbc_conf(frame = dyf, catalog_connection = self.params["glue_conn_name"], connection_options = {"dbtable": self.params["stg_table"], "database": self.params["catalog_db"], "postactions":pre_query}, redshift_tmp_dir = self.params["output_tmp_path"], transformation_ctx = "datasink1")
         
 class AuditFields(object):
     def __init__(self):
