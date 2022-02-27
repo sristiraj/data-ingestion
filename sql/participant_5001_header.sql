@@ -1,4 +1,5 @@
-select distinct rt.tbamessage_header_platforminternalid as global_participant_id,
+select distinct rt.tbamessage_header_platforminternalid as participant_id,
+rt.tbamessage_header_globalPersonIdentifier as global_participant_id,
 current_date as record_start_date,
 '9999-09-09' as record_end_date,
 1 as current_indicator,
@@ -9,7 +10,7 @@ current_date as update_date,
 null as participant_name,
 rt.tbamessage_header_nationaltaxid ssn,
 rt.tbamessage_person_birthdate as birth_date,
-DATEDIFF(sysdate, rt.tbamessage_person_birthdate) as age,
+round(months_between(current_timestamp(), rt.tbamessage_person_birthdate)/12,2) as age,
 case   tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_organizationid 
 WHEN 8337 THEN tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_value
 WHEN 8347 THEN tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_value ELSE null END department_code,
