@@ -94,7 +94,7 @@ class ProcessedIncrementalDataSink(object):
         composite_key = self.params["composite_key"].split(",")
         update_join_clause=""
         print(composite_key)
-        pre_update_query="begin;update {} t1  set current_indicator=0 , record_end_date = current_date select from {} t2 where ".format(self.params["catalog_table"],self.params["stg_table"])
+        pre_update_query="begin;update {} t1  set current_indicator=0 , record_end_date = current_date  from {} t2 where ".format(self.params["catalog_table"],self.params["stg_table"])
         for key in composite_key:
             update_join_clause += "t1."+key+"="+"t2."+key+" and "
         update_join_clause +=  "1=1;"
