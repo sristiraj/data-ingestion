@@ -10,7 +10,7 @@ from datetime import datetime
 from awsglue.dynamicframe import DynamicFrame
 
 
-args = getResolvedOptions(sys.argv, ["JOB_NAME","INPUT_DATA_PATH","OUTPUT_TMP_PATH","REDSHIFT_DB_NAME","REDSHIFT_TABLE_NAME","INPUT_SCHEMA_PATH","SOURCE_FORMAT","SQL_PATH","GLUE_CONN_NAME","STG_TABLE","COMPOSITE_KEY"])
+args = getResolvedOptions(sys.argv, ["JOB_NAME","OUTPUT_TMP_PATH","REDSHIFT_DB_NAME","REDSHIFT_TABLE_NAME","SOURCE_FORMAT","SQL_PATH","GLUE_CONN_NAME","STG_TABLE","COMPOSITE_KEY"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 #     logger = watcherlogger().Builder().setLogLevel(logging.INFO).setStreamNamePrefix(context["module_name"]).getOrCreate()
     print("Started Job")
     #Separate read and write params
-    read_params = {"input_data_path":args["INPUT_DATA_PATH"],"input_schema_path":args["INPUT_SCHEMA_PATH"],"source_format":args["SOURCE_FORMAT"],"sql_path":args["SQL_PATH"]}
+    read_params = {"source_format":args["SOURCE_FORMAT"],"sql_path":args["SQL_PATH"]}
     write_params = {"output_tmp_path":args["OUTPUT_TMP_PATH"],"catalog_db":args["REDSHIFT_DB_NAME"],"catalog_table":args["REDSHIFT_TABLE_NAME"], "glue_conn_name":args["GLUE_CONN_NAME"],"stg_table":args["STG_TABLE"],"composite_key":args["COMPOSITE_KEY"]}
     log_data = context
     print("Read source")
