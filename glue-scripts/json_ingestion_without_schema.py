@@ -16,7 +16,6 @@ sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 spark.sql("set spark.sql.caseSensitive=true")
-
 class RawDataSource(object):
     def __init__(self, params):
         self.params = params
@@ -24,7 +23,7 @@ class RawDataSource(object):
         
     def read_source_data(self):
         dfc_root_table_name = "root" 
-        df = spark.read.format(self.params["source_format"]).option("multiline","true").load(self.params["input_data_path"])
+        df = spark.read.format(self.params["source_format"]).option("inferSchema","true").option("mergeSchema","true").load(self.params["input_data_path"])
         
         return df
     
@@ -47,12 +46,24 @@ class RawDataSink(object):
             print(odf.columns)
             for col in odf.columns:
                 new_col.append(col.replace(".","_") )   
+            
 
             odf = odf.toDF(*new_col)
             print(odf.columns)
+            new_cols = []
+            for col in odf.columns:
+                if "host" in col:
+                    col = col.replace("host","host_ip")
+                if "Host" in col:
+                    col = col.replace("Host","host_url")
+                new_cols.append(col)
+            odf = odf.toDF(*new_cols)    
             odf = self.add_partition_raw_data(odf)
             odf = AuditFields().add_audit(odf)
+            
+            print(self.params["output_data_path"]+"_"+modified_key)
             odf.write.partitionBy("partition_load_dt_tmstmp").format(self.params["target_format"]).mode("overwrite").option("path",self.params["output_data_path"]+"_"+modified_key).saveAsTable(self.params["catalog_db"]+"."+self.params["catalog_table"]+'_'+modified_key)
+            #odf.write.partitionBy("partition_load_dt_tmstmp").format(self.params["target_format"]).mode("overwrite").option("path",self.params["output_data_path"]+"_"+modified_key).saveAsTable()
             
     
     def add_partition_raw_data(self, df):
