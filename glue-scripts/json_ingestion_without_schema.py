@@ -15,6 +15,7 @@ args = getResolvedOptions(sys.argv, ["JOB_NAME","INPUT_DATA_PATH","OUTPUT_DATA_P
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
+spark.sql("set spark.sql.caseSensitive=true")
 
 class RawDataSource(object):
     def __init__(self, params):
