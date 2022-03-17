@@ -23,7 +23,7 @@ class RawDataSource(object):
         
     def read_source_data(self):
         dfc_root_table_name = "root" 
-        df = spark.read.format(self.params["source_format"]).option("inferSchema","true").option("mergeSchema","true").load(self.params["input_data_path"])
+        df = spark.read.format(self.params["source_format"]).option("inferSchema","true").option("multiline","true").option("mergeSchema","true").load(self.params["input_data_path"])
         
         return df
     
