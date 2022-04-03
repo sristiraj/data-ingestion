@@ -1,0 +1,104 @@
+{
+	"@timestamp": "2021-1027T15:22:19.234Z",
+	"message": {
+		"header": {
+			"platformExternalId": "119608544",
+			"topic": "Person_Update_Low_Latency",
+			"domains": "DC",
+			"clientId": "06437",
+			"bodyVersion": "2.11",
+			"gender": "U",
+			"platformType": "TBA_4X",
+			"subtopic": "DCUnitsRORContributions",
+			"lastName": "PARTICIPANT",
+			"roleType": "rkp",
+			"schemaName": "QGO6437P",
+			"workerId": "",
+			"globalPersonIdentifier": "",
+			"zipcode": "",
+			"sourceSystemReferenceId": "14777310962021-10-27-10.22.19.15000",
+			"nationalTaxId": "119608544",
+			"systemInstanceId": "",
+			"nationalTaxIdCountry": "USA",
+			"birthDate": "1995-01-01",
+			"sourceSystemExtractionTimestamp": "2021-10-27T10:22:19.155-05:00",
+			"nationalTaxIdType": "SSN",
+			"employmentStatus": "I",
+			"isDataChangeInitiatedByPerson": "Y",
+			"platformInternalId": "000631096",
+			"firstName": "TEST"
+		},
+		"definedContributionBenefits": {
+			"definedContributionPlans": [{
+				"planYtdCashFlows": [{
+					"date": "2021-07-16",
+					"casFlowDollars": 4704.92,
+					"cashFlowType": "CF",
+					"isBalanceZero": false
+				}],
+				"planDescription": "",
+				"planId": "10",
+				"isQualifiedPlan": true,
+				"planAccountFundTable": [{
+						"lastUpdated": "2021-07-16",
+						"assetClassId": "5",
+						"accountGroupId": "0",
+						"yearToDateCumulativeActivityBalance": 477.73,
+						"subFundId": "160",
+						"accountId": "120",
+						"accountSubTypeCode": "",
+						"planAccountFundBalanceUnits": 16.7682,
+						"stockCost": 0.0,
+						"fundId": "90",
+						"fundYearToDateBeginBalance": 0.0
+					},
+					{
+						"lastUpdated": "2021-07-16",
+						"assetClassId": "5",
+						"accountGroupId": "0",
+						"yearToDateCumulativeActivityBalance": 1886.73,
+						"subFundId": "160",
+						"accountId": "140",
+						"accountSubTypeCode": "",
+						"planAccountFundBalanceUnits": 66.2272,
+						"stockCost": 0.0,
+						"fundId": "90",
+						"fundYearToDateBeginBalance": 0.0
+					},
+					{
+						"lastUpdated": "2021-07-16",
+						"assetClassId": "5",
+						"accountGroupId": "0",
+						"yearToDateCumulativeActivityBalance": 2340.36,
+						"subFundId": "160",
+						"accountId": "150",
+						"accountSubTypeCode": "",
+						"planAccountFundBalanceUnits": 82.1458,
+						"stockCost": 0.0,
+						"fundId": "90",
+						"fundYearToDateBeginBalance": 0.0
+					}
+				],
+				"planFullDescription": "",
+				"planFutureInvestmentElections": [{
+					"planInvestmentElectionFundTable": [{
+						"electionPercent": 100.0,
+						"fundId": "90",
+						"assetClassId": "5"
+					}],
+					"isAutoRebalanceElected": false,
+					"fitireInvestmentGroupId": "10"
+				}]
+			}],
+
+			"isLoanCouponEligible": false,
+			"planParticipationStatuses": [{
+				"isActive": true,
+				"statusEffectiveDate": "2021-07-16",
+				"planId": "10"
+			}]
+
+		}
+	},
+	"@version": "1"
+}

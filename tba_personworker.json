@@ -1,0 +1,284 @@
+{
+	"TBAMessage": {
+		"header": {
+			"platformInternalId": "000631096",
+			"domains": "HR",
+			"subtopic": "PersonWorker",
+			"clinetId": "06437",
+			"isDataChangeInitiatedByPerson": "Y",
+			"schemaName": "QG06437B",
+			"nationalTaxId": "000631096",
+			"nationalTaxIdType": "SSN",
+			"lastName": "Doe000631096",
+			"platformExternalId": "000631096",
+			"systemInstanceId": "",
+			"globalPersonIdentifier": "",
+			"employmentStatus": "I",
+			"roleType": "rkp",
+			"firstName": "Pat",
+			"gender": "U",
+			"nationalTaxIdCountry": "USA",
+			"sourceSystemExtractionTimestamp": "2022-02-17T08:06:22.844-06:00",
+			"zipcode": "",
+			"workerId": "",
+			"bodyVersion": "2.8",
+			"platformType": "TBA_4X",
+			"topic": "Person_Update_Low_Latency"
+		},
+		"login": {
+			"temporaryPasswordDelivery": "CP"
+		},
+		"contact": {
+			"phones": [{
+				"isMobile": true,
+				"effectiveFrom": "2020-01-01",
+				"phoneType": "MOBILE",
+				"phoneTypeDescription": "Mobile Phone Number",
+				"effectiveUntil": "2299-12-31",
+				"phoneId": "85",
+				"isPhoneBad": false,
+				"isHome": false,
+				"isWork": false,
+				"phoneNumber": "9995551212",
+				"phoneNumberFormattedCode": "UC",
+				"phoneNumberFormatted": "",
+				"isPreferred": false,
+				"isOutboundVoiceMessageEnabled": "",
+				"isFax": false,
+				"extension": ""
+			}],
+			"emails": [{
+				"effectiveUntil": "2299-12-31",
+				"effectiveFrom": "2022-02-17",
+				"isEmailBad": false,
+				"isWork": false,
+				"emailAddress": "beau.grant@afs.com",
+				"emailId": "40",
+				"isPreferred": true,
+				"emailType": "PRSL-EMAL",
+				"isHome": true,
+				"emailTypeDescription": "Personal Email"
+			}],
+			"postalAddresses": [{
+				"effectiveUntil": "2299-12-31",
+				"effectiveFrom": "2020-01-01",
+				"stateDescription": "Nevada",
+				"addressLine5": "",
+				"isWork": false,
+				"state": "NV",
+				"isPreferred": false,
+				"county": "",
+				"addressType": "PERM",
+				"countryDescription": "United States",
+				"isTemp": false,
+				"addressLine3": "",
+				"isHome": true,
+				"city": "N LAS VEGAS",
+				"addressTypeDescription": "Permanent (home) Address",
+				"addressLine4": "",
+				"zipcode": "9999999999",
+				"country": "USA",
+				"isAddressBad": false,
+				"addressLine2": "",
+				"addressLine1": "Do Not Mail"
+			}],
+
+			"isDirectDepositOnFile": true
+		},
+		"personInstitutionRelationships": {
+			"institutionRelationships": [],
+			"sourceSchemaName": "QG06437B",
+			"platformInternalId": "631096",
+			"normalizedClientId": "06437"
+		},
+		"benefitsWorkerAttributes": [{
+			"sourceSchemaName": "QG06437B",
+			"benefitsCurrentEmploymentStatuses": [{
+				"categoryId": 21,
+				"beginDate": "2021-06-04",
+				"endDate": "2299-12-31",
+				"value": "S"
+			}, {
+				"categoryId": 8467,
+				"beginDate": "2021-07-16",
+				"endDate": "2299-12-31",
+				"value": "Y"
+			}, {
+				"categoryId": 8597,
+				"beginDate": "2021-07-16",
+				"endDate": "2299-12-31",
+				"value": "D"
+			}, {
+				"categoryId": 8397,
+				"beginDate": "2021-07-16",
+				"endDate": "2299-12-31",
+				"value": "K"
+			}],
+			"benefitsCurrentOrganizationCodes": [{
+				"beginDate": "2021-07-16",
+				"endDate": "2299-12-31",
+				"value": "AF",
+				"organizationId": 8337
+			}, {
+				"beginDate": "2021-07-16",
+				"endDate": "2299-12-31",
+				"value": "1C",
+				"organizationId": 8357
+			}, {
+				"beginDate": "2021-07-16",
+				"endDate": "2299-12-31",
+				"value": "2604",
+				"organizationId": 8377
+			}],
+			"normalizedClientId": "06437"
+		}],
+		"person": {
+			"firstName": "Pat",
+			"middleName": "B",
+			"gender": "U",
+			"nationalTaxIdCountry": "USA",
+			"preferredLocale": "",
+			"maritalStatus": "S",
+			"deathDate": "2299-12-31",
+			"nationalTaxId": "000631096",
+			"nationalTaxIdType": "SSN",
+			"lastName": "Doe000631096",
+			"title": "",
+			"suffix": "",
+			"birthDate": "1981-01-01",
+			"primaryLanguage": "AE",
+			"countryRecordingStatus": "Y"
+		},
+		"worker": {
+			"pays": [{
+				"payGroupDescription": "SgnfHRPyrt",
+				"totalPayAmount": 0.0,
+				"payGroupFrequency": "A1",
+				"payGroupShortDescription": "CM-SgnfHRPyrt",
+				"payGroupFrequencyLabel": "Annual",
+				"payGroupLabel": "BASE-SLRY-DFLT",
+				"payGroupType": "PAYDEN",
+				"sourceSystemPayGroupId": 40
+			}],
+			"payRollFrequencies": [{
+				"payRollFrequencyCode": "M",
+				"payRollGroupShortDescription": "Monthly Payroll",
+				"payRollFrequencyFactor": 12.0,
+				"payRollFrequencyId": 30,
+				"payRollFrequencyHierarchy": "1",
+				"payRollType": "A",
+				"payRollGroupDescription": "C Monthly"
+			}],
+			"workerRole": {
+				"isVIP": false
+			},
+			"retirementDate": "",
+			"hireDate": "",
+			"isTerminated": "Y",
+			"employerName": "Thrift Savings Plan",
+			"originalHireDate": "",
+			"workerId": "",
+			"workerType": "E",
+			"isOnLeave": "N",
+			"isDataHRVerified": "true",
+			"currentEmploymentStatus": {
+				"employmentStatusEffectiveDate": "2021-01-01",
+				"employmentStatusCode": "Term",
+				"employmentStatusDescription": "Term",
+				"employmentStatusFullDescription": "Termination"
+			},
+			"terminationDate": "2021-01-01",
+			"isHighlyCompensatedEmployee": false
+		},
+		"personRelationships": {
+			"sourceSchemaName": "QG06437B",
+			"platformInternalId": "631096",
+			"normalizedClientId": "06437",
+			"relationships": [{
+				"studentCode": "N",
+				"basicInformation": [{
+					"firstName": "Billy",
+					"middleName": "",
+					"gender": "",
+					"nationalTaxIdCountry": "",
+					"deathDate": "2299-12-31",
+					"nationalTaxId": "",
+					"nationalTaxIdType": "SSN",
+					"lastName": "Test",
+					"title": "",
+					"suffix": "",
+					"birthDate": "1800-01-01",
+					"6": "TEST, BILLY",
+					"contactInformation": [{
+						"sourceSchemaName": "QG06437B",
+						"emails": [],
+						"postalAddresses": [],
+						"normalizedClientId": "06437",
+						"phones": []
+					}]
+				}],
+				"disabilityCode": "N",
+				"relationshipPlatformInternalId": 230000002,
+				"relationshipSequence": 1,
+				"medicareHealthInsuranceClaimNumber": "",
+				"relationshipType": "",
+				"medicarePartAEndDate": "2299-12-31",
+				"medicarePartBEndDate": "2299-12-31",
+				"relationshipId": "000631096",
+				"medicarePartDEndDate": "2299-12-31",
+				"additionalAttributes": [],
+				"medicarePartABeginDate": "1900-01-01",
+				"relationshipCode": "C",
+				"medicareEligibility": "N",
+				"medicarePartBBeginDate": "1900-01-01",
+				"medicarePartDBeginDate": "1900-01-01",
+				"fullTimeStudentMaximumAge": "19-25"
+			}]
+		},
+		"personAttributes": [{
+			"isDeathCertificateReceived": "false",
+			"sourceSchemaName": "QG06437B",
+			"additionalAttributes": [{
+				"fieldName": "C-PAYROLL-OFF-NUM",
+				"fieldValue": "97380100"
+			}, {
+				"fieldName": "C-TSP-SCD-DATE",
+				"fieldValue": "2010-06-03"
+			}, {
+				"fieldName": "ACCOUNT-NUMBER",
+				"fieldValue": "0000005295929"
+			}, {
+				"fieldName": "C-AUTO-ENRL-EXP-DT",
+				"fieldValue": "2020-05-06"
+			}, {
+				"fieldName": "FMI-LOGO-DSPL-CD",
+				"fieldValue": "Y"
+			}, {
+				"fieldName": "LOGO-EMAL-CD",
+				"fieldValue": "06437_image_A_logo_email.jpg"
+			}, {
+				"fieldName": "LOGO-FONT-NM",
+				"fieldValue": "tc56np"
+			}, {
+				"fieldName": "LOGO-TX",
+				"fieldValue": "AB"
+			}],
+			"normalizedClientId": "06437"
+		}],
+		"preferences": [{
+			"communicationPreferences": [{
+				"benefitCommunicationPreference": "Electronic",
+				"hasPersonSubscribedForTextMessages": false,
+				"advocacyCommunicationPreference": "None"
+			}]
+		}],
+		"personBenefitAccountRelationships": [{
+			"originatingPersonName": "",
+			"platformInternalId": "631096",
+			"originatingPersonInternalId": "0",
+			"isSharedAccessEligible": false
+		}]
+	},
+	"@timestamp": "2022-02-17T14:06:22.890Z",
+	"@version": "1"
+}
