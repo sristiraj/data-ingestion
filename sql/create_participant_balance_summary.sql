@@ -15,6 +15,6 @@ create table datamart.participant_balance_summary(
   accountId varchar(10),
   fund_balance_units varchar(10),
   price varchar(10),
-  civilian_group varchar(10),
+  civilian_group varchar(100),
   uniformed_group varchar(100)
 ) DISTKEY (participant_id);
