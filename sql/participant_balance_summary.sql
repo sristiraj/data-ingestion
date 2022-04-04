@@ -14,8 +14,8 @@ tbadcbdcppft.message_definedcontributionbenefits_definedcontributionplans_val_pl
 tbadcbdcppft.message_definedcontributionbenefits_definedcontributionplans_val_planaccountfundtable_val_planaccountfundbalanceunits fund_balance_units,
 lfp.price,
 --tbpavaa.tbamessage_personattributes_val_additionalattributes_val_fieldname payroll_office_number
-case when tbpavaa.tbamessage_personattributes_val_additionalattributes_val_fieldname is not null then ltam_civ."group" else null end civilian_group,
-case when tbpavaa1.tbamessage_personattributes_val_additionalattributes_val_fieldname is not null then ltam_civ."group" else null end uniformed_group
+cast(case when tbpavaa.tbamessage_personattributes_val_additionalattributes_val_fieldname is not null then ltam_civ."group" else null end as varchar(100)) civilian_group,
+caast(case when tbpavaa1.tbamessage_personattributes_val_additionalattributes_val_fieldname is not null then ltam_civ."group" else null end as varchar(100)) uniformed_group
 from default.tba_json_balance_summary_root rt left outer join default.tba_json_balance_summary_root rt_acc
 on rt.tbamessage_header_platforminternalid = rt_acc.message_header_platforminternalid
 and rt_acc.message_header_subtopic = 'DCUnitsRORContributions' 
