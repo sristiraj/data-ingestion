@@ -1,9 +1,12 @@
+select participant_id, global_participant_id, record_start_date, record_end_date, current_indicator, hash_key, create_date, update_date, update_userid, participant_name,
+ssn, birth_date, age, max(department_code) department_code, max(employer_agency_code) employer_agency_code, max(payroll_office_number) payroll_office_number, 
+employment_status, max(auto_enrollment_code) auto_enrollment_code, max(auto_enrollment_date) auto_enrollment_date from (
 select distinct rt.tbamessage_header_platforminternalid as participant_id,
 rt.tbamessage_header_globalPersonIdentifier as global_participant_id,
 current_date as record_start_date,
 to_date('9999-09-09','yyyy-MM-dd') as record_end_date,
 cast(1 as long) as current_indicator,
-sha2(concat(rt.tbamessage_header_platforminternalid,rt.tbamessage_header_globalPersonIdentifier,rt.tbamessage_header_nationaltaxid,rt.tbamessage_person_birthdate,tbwabcoc.tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes_val_value,tbpavaa.tbamessage_personattributes_val_additionalattributes_val_fieldvalue,tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_value),256) as hash_key,
+sha2(concat(rt.tbamessage_header_platforminternalid,rt.tbamessage_header_globalPersonIdentifier,rt.tbamessage_header_nationaltaxid),256) as hash_key,
 current_date create_date,
 current_date as update_date,
 'glue' as update_userid,
@@ -40,4 +43,6 @@ on rt.tbamessage_personattributes=tbpa.id left outer join
 default.json_out_new_root_tbamessage_personattributes_val_additionalattributes tbpavaa
 on tbpa.tbamessage_personattributes_val_additionalattributes = tbpavaa.id
 left outer join default.json_out_new_root_tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses tbwabcs
-on tbwa.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses=tbwabcs.id
+on tbwa.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses=tbwabcs.id) tab
+group by participant_id, global_participant_id, record_start_date, record_end_date, current_indicator, hash_key, create_date, update_date, update_userid, participant_name,
+ssn, birth_date, age, employment_status
