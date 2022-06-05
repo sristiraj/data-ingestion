@@ -36,13 +36,17 @@ max(cast(communication_preference as varchar(1000))) communication_preference,
 max(cast(auto_enrollment_code as varchar(50))) auto_enrollment_code,
 max(cast(auto_enrollment_date as varchar(100))) auto_enrollment_date,
 max(cast(employment_code as varchar(100))) employment_code,
-max(cast(employment_cd_date as varchar(100))) employment_cd_date
+max(cast(employment_cd_date as varchar(100))) employment_cd_date,
+max(cast(sourcesystemextractiontimestamp as TIMESTAMP)) as sourcesystemextractiontimestamp,
+max(cast(messageTimestamp as TIMESTAMP)) as messageTimestamp,
+max(cast(originatingpersoninternalid as VARCHAR(100))) originatingpersoninternalid
 from (
 with rt_header as (select * from (select *, row_number() over(partition by tbamessage_header_platforminternalid 
 order by to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") desc) rn from prod_alight_trusted_tba.tba_datachangeevents_root where partition_load_dt_tmstmp = (select max(partition_load_dt_tmstmp) from prod_alight_trusted_tba.tba_datachangeevents_root )) x where rn=1),
 udpdce as (select * from (select idm.message_body_create_idmapping_val_platforminternalid ,
 udp.message_header_action,
-udp.message_body _create_globalpersonidentifer ,
+udp.message_body_create_globalpersonidentifier ,
+udp.tbamessage_header_messagetimestamp,
 row_number() over(partition by idm.message_body_create_idmapping_val_platforminternalid order by 
 to_timestamp(case when udp.tbamessage_header_messagetimestamp="" then null else udp.tbamessage_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") desc) rn
 from 
@@ -56,11 +60,11 @@ on udp.message_body_create_idmapping = idm.id and udp.partition_load_dt_tmstmp =
 )
 where rn=1)
 select distinct rt.tbamessage_header_platforminternalid as participant_id,
-udp.message_body _create_globalpersonidentifer as global_participant_id,
+udp.message_body_create_globalpersonidentifier as global_participant_id,
 current_date as record_start_date,
 to_date('9999-09-09','yyyy-MM-dd') as record_end_date,
 cast(1 as long) as current_indicator,
-sha2(concat(udp.message_body_create_globalpersonidentifer,concat(rt.tbamessage_header_platforminternalid,rt.tbamessage_header_nationaltaxid))),256) as hash_kay,
+sha2(concat(udpdce.message_body_create_globalpersonidentifier,concat(rt.tbamessage_header_platforminternalid,rt.tbamessage_header_nationaltaxid))),256) as hash_kay,
 current_date create_date,
 current_date as update_date,
 'glue' as update_userid,
@@ -114,7 +118,8 @@ WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentem
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
 WHEN '21' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate 
 WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate ELSE null END employment_cd_date,
-to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") message_timestamp,
+to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") sourcesystemextractiontimestamp,
+to_timestamp(case when udpdce.tbamessage_header_messagetimestamp="" then null else udpdce.tbamessage_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") messageTimestamp,
 tbapbar.tbamessage_personbenefitaccountrelationships_val_originatingpersoninternalid originatingpersoninternalid
 FROM rt_header rt left outer join prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_benefitworkerattributes tbwa 
 on rt.tbamessage_benefitworkerattributes = tbwa.id and rt.partition_load_dt_tmstmp = tbwa.partition_load_dt_tmstmp left outer join 
@@ -146,13 +151,15 @@ and tbmsgpref.partition_load_dt_tmstmp = tbmsgcommpref.partition_load_dt_tmstmp
 where 
 rt.tbamessage_header_platforminternalid is not null and
 rt.tbamessage_header_subtopic = 'PersonWorker' and udp.message_header_action = 'Create'
+
 union
 
 with rt_header1 as (select * from (select *, row_number() over(partition by tbamessage_header_platforminternalid 
 order by to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") desc) rn from prod_alight_trusted_tba.tba_datachangeevents_root where partition_load_dt_tmstmp = (select max(partition_load_dt_tmstmp) from prod_alight_trusted_tba.tba_datachangeevents_root )) x where rn=1),
 udpce1 as (select * from (select idm.message_body_update_after_modificationhistory_val_sourcesysteminternalid ,
 udp.message_header_action,
-udp.message_body_update_after_globalpersonidentifer,
+udp.message_body_update_after_globalpersonidentifier,
+udp.tbamessage_header_messagetimestamp,
 row_number() over(partition by idm.message_body_update_after_modificationhistory_val_sourcesysteminternalid order by 
 to_timestamp(case when udp.tbamessage_header_messagetimestamp="" then null else udp.tbamessage_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") desc) rn
 from 
@@ -165,11 +172,11 @@ left outer join
 on udp.message_body_after_modificationhistory  = idm.id and udp.partition_load_dt_tmstmp = idm.partition_load_dt_tmstmp)
 where rn=1)
 select distinct rt.tbamessage_header_platforminternalid as participant_id,
-udp.message_body_update_after_globalpersonidentifer as global_participant_id,
+udp.message_body_update_after_globalpersonidentifier as global_participant_id,
 current_date as record_start_date,
 to_date('9999-09-09','yyyy-MM-dd') as record_end_date,
 cast(1 as long) as current_indicator,
-sha2(concat(udp.message_body_update_after_globalpersonidentifer,concat(rt.tbamessage_header_platforminternalid,rt.tbamessage_header_nationaltaxid))),256) as hash_kay,
+sha2(concat(udp.message_body_update_after_globalpersonidentifier,concat(rt.tbamessage_header_platforminternalid,rt.tbamessage_header_nationaltaxid))),256) as hash_kay,
 current_date create_date,
 current_date as update_date,
 'glue' as update_userid,
@@ -223,7 +230,8 @@ WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentem
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
 WHEN '21' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate 
 WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate ELSE null END employment_cd_date,
-to_timestamp(case when udp.tbamessage_header_messagetimestamp="" then null else udp.tbamessage_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") message_timestamp,
+to_timestamp(case when udp.tbamessage_header_messagetimestamp="" then null else udp.tbamessage_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") sourcesystemextractiontimestamp,
+to_timestamp(case when udpdce.tbamessage_header_messagetimestamp="" then null else udpdce.tbamessage_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") messageTimestamp,
 tbapbar.tbamessage_personbenefitaccountrelationships_val_originatingpersoninternalid originatingpersoninternalid
 FROM rt_header1 rt left outer join 
 prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_benefitworkerattributes tbwa 
