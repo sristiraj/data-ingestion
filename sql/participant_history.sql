@@ -32,7 +32,7 @@ max(cast(retirementDate as varchar(100)) retirementDate,
 max(cast(hireDate as varchar(100))) hireDate,
 max(cast(isTerminated as varchar(10))) isTerminated,
 max(cast(terminationDate as varchar(100))) terminationDate,
-max(cast(comminication_preference as varchar(1000))) comminication_preference,
+max(cast(communication_preference as varchar(1000))) communication_preference,
 max(cast(auto_enrollment_code as varchar(50))) auto_enrollment_code,
 max(cast(auto_enrollment_date as varchar(100))) auto_enrollment_date,
 max(cast(employment_code as varchar(100))) employment_code,
@@ -52,7 +52,8 @@ from prod_alight_trusted_tba.tba_udpdatachangeevents_root_message_body_create_id
 left outer join 
 (select * from prod_alight_trusted_tba.tba_udpdatachangeevents_root where partition_load_dt_tmstmp=(select max(partition_load_dt_tmstmp) from
  prod_alight_trusted_tba.tba_udpdatachangeevents_root)  ) udp 
-on udp.message_body_create_idmapping = idm.id and udp.partition_load_dt_tmstmp = idm.partition_load_dt_tmstmp)
+on udp.message_body_create_idmapping = idm.id and udp.partition_load_dt_tmstmp = idm.partition_load_dt_tmstmp
+)
 where rn=1)
 select distinct rt.tbamessage_header_platforminternalid as participant_id,
 udp.message_body _create_globalpersonidentifer as global_participant_id,
@@ -95,7 +96,7 @@ rt.tbamessage_worker_retirementdate as retirementDate,
 rt.tbamessage_worker_hiredate as hireDate,
 rt.tbamessage_worker_isterminated as isTerminated,
 rt.tbamessage_worker_terminationdate as terminationDate,
-tbmsgcompref.tbamessage_preferences_val_communicationpreferences_val_benefitscommunicationpreference as commnunication_preference,
+tbmsgcommpref.tbamessage_preferences_val_communicationpreferences_val_benefitscommunicationpreference as communication_preference,
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
 WHEN 8397 THEN '8397' ELSE null end retirement_code_civil,
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
@@ -134,6 +135,14 @@ idm.message_body_create_idmapping_val_platforminternalid
 left outer join  prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_personbenefitaccountrelationships tbapbar
 on rt.tbamessage_personbenefitaccountrelationships = tbapbar.id
 and rt.partition_load_dt_tmstmp = tbapbar.partition_load_dt_tmstmp
+left outer join 
+prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_preferences tbmsgpref 
+on rt.tbamessage_perferences = tbmsgpref.id 
+and rt.partition_load_dt_tmstmp = tbmsgpref.partition_load_dt_tmstmp
+left outer join
+prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_preferences_val_communicationpreferences tbmsgcommpref on 
+tbmsgpref.tbamessage_preferences_val_communicationpreferences = tbmsgcommpref.id 
+and tbmsgpref.partition_load_dt_tmstmp = tbmsgcommpref.partition_load_dt_tmstmp
 where 
 rt.tbamessage_header_platforminternalid is not null and
 rt.tbamessage_header_subtopic = 'PersonWorker' and udp.message_header_action = 'Create'
@@ -196,7 +205,7 @@ rt.tbamessage_worker_retirementdate as retirementDate,
 rt.tbamessage_worker_hiredate as hireDate,
 rt.tbamessage_worker_isterminated as isTerminated,
 rt.tbamessage_worker_terminationdate as terminationDate,
-tbmsgcompref.tbamessage_preferences_val_communicationpreferences_val_benefitscommunicationpreference as commnunication_preference,
+tbmsgcommpref.tbamessage_preferences_val_communicationpreferences_val_benefitscommunicationpreference as communication_preference,
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
 WHEN 8397 THEN '8397' ELSE null end retirement_code_civil,
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
@@ -238,6 +247,14 @@ udp.message_body_update_after_modificationhistory_val_sourcesysteminternalid
 left outer join  prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_personbenefitaccountrelationships tbapbar
 on rt.tbamessage_personbenefitaccountrelationships = tbapbar.id
 and rt.partition_load_dt_tmstmp = tbapbar.partition_load_dt_tmstmp
+left outer join 
+prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_preferences tbmsgpref 
+on rt.tbamessage_perferences = tbmsgpref.id 
+and rt.partition_load_dt_tmstmp = tbmsgpref.partition_load_dt_tmstmp
+left outer join
+prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_preferences_val_communicationpreferences tbmsgcommpref on 
+tbmsgpref.tbamessage_preferences_val_communicationpreferences = tbmsgcommpref.id 
+and tbmsgpref.partition_load_dt_tmstmp = tbmsgcommpref.partition_load_dt_tmstmp
 where 
 rt.tbamessage_header_platforminternalid is not null and
 rt.tbamessage_header_subtopic = 'PersonWorker' and udp.message_header_action = 'Update'
