@@ -118,9 +118,9 @@ WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentem
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
 WHEN '21' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate 
 WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate ELSE null END employment_cd_date,
-to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") sourcesystemextractiontimestamp,
-to_timestamp(case when udp.message_header_messagetimestamp="" then null else udp.message_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") messageTimestamp,
-tbapbar.tbamessage_personbenefitaccountrelationships_val_originatingpersoninternalid originatingpersoninternalid
+to_utc_timestamp(to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz"),"CST") sourcesystemextractiontimestamp,
+to_utc_timestamp(to_timestamp(case when udp.message_header_messagetimestamp="" then null else udp.message_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz"),"CST") messageTimestamp,
+ tbapbar.tbamessage_personbenefitaccountrelationships_val_originatingpersoninternalid originatingpersoninternalid
 FROM rt_header rt left outer join prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_benefitsworkerattributes tbwa 
 on rt.tbamessage_benefitsworkerattributes = tbwa.id and rt.partition_load_dt_tmstmp = tbwa.partition_load_dt_tmstmp left outer join 
 prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_benefitsworkerattributes_val_benefitscurrentorganizationcodes tbwabcoc 
@@ -227,8 +227,8 @@ WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentem
 case tbwabcs.tbamessage_benefitsworkerattributes_val_benefitcurrentemploymentstatuses_val_categoryid 
 WHEN '21' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate 
 WHEN '22' THEN tbwabcs.tbamessage_benefitsworkerattributes_val_benefitscurrentemploymentstatuses_val_begindate ELSE null END employment_cd_date,
-to_utc_timestamp(to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz"),"CDT") sourcesystemextractiontimestamp,
-to_utc_timestamp(to_timestamp(case when udp.message_header_messagetimestamp="" then null else udp.message_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz"),"CDT") messageTimestamp,
+to_utc_timestamp(to_timestamp(case when rt.tbamessage_header_sourcesystemextractiontimestamp="" then null else rt.tbamessage_header_sourcesystemextractiontimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz"),"CST") sourcesystemextractiontimestamp,
+to_utc_timestamp(to_timestamp(case when udp.message_header_messagetimestamp="" then null else udp.message_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz"),"CST") messageTimestamp,
 tbapbar.tbamessage_personbenefitaccountrelationships_val_originatingpersoninternalid originatingpersoninternalid
 FROM rt_header1 rt left outer join 
 prod_alight_trusted_tba.tba_datachangeevents_root_tbamessage_benefitsworkerattributes tbwa 
