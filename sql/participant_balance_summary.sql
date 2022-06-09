@@ -7,12 +7,9 @@ udp.tbamessage_header_messagetimestamp,
 row_number() over(partition by idm.message_body_create_idmapping_val_platforminternalid order by 
 to_timestamp(case when udp.tbamessage_header_messagetimestamp="" then null else udp.tbamessage_header_messagetimestamp end ,"yyyy-MM-dd'T'HH:mm:ss.SSSz") desc) rn
 from 
-(select * from prod_alight_trusted_tba.tba_udpdatachangeevents_root_message_body_create_idmapping
-where partition_load_dt_tmstmp=(select max(partition_load_dt_tmstmp) 
-from prod_alight_trusted_tba.tba_udpdatachangeevents_root_message_body_create_idmapping)  ) idm 
+(select * from prod_alight_trusted_tba.tba_udpdatachangeevents_root_message_body_create_idmapping ) idm 
 left outer join 
-(select * from prod_alight_trusted_tba.tba_udpdatachangeevents_root where partition_load_dt_tmstmp=(select max(partition_load_dt_tmstmp) from
- prod_alight_trusted_tba.tba_udpdatachangeevents_root)  ) udp 
+(select * from prod_alight_trusted_tba.tba_udpdatachangeevents_root ) udp 
 on udp.message_body_create_idmapping = idm.id and udp.partition_load_dt_tmstmp = idm.partition_load_dt_tmstmp
 )
 where rn=1)
