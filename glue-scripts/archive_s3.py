@@ -13,7 +13,7 @@ def archive_data(input_path, processed_file_path, ctx):
         trg_s3_bucket = trg_path[5:s3_bucket_index+5]
         trg_s3_key = trg_path[s3_bucket_index+6:]
         #List all files in interim path
-		bucket = s3.Bucket(s3_bucket)
+	bucket = s3.Bucket(s3_bucket)
         objs = list(bucket.objects.filter(Prefix=s3_key))
         print(objs)
         for obj in objs:
