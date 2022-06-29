@@ -1,15 +1,15 @@
 def archive_data(input_path, processed_file_path, ctx):
         '''Archive files from interim path to archive path after load processing'''
         print("Start archive source data")
-		#Get source bucket path details
+	#Get source bucket path details
         src_path = input_path
         s3 = boto3.resource('s3')
         s3_bucket_index = src_path.replace("s3://","").find("/")
         s3_bucket = src_path[5:s3_bucket_index+5]
         s3_key = src_path[s3_bucket_index+6:]
-		#Get target bucket path details
-		trg_path = processed_file_path
-		trg_s3_bucket_index = trg_path.replace("s3://","").find("/")
+	#Get target bucket path details
+	trg_path = processed_file_path
+	trg_s3_bucket_index = trg_path.replace("s3://","").find("/")
         trg_s3_bucket = trg_path[5:s3_bucket_index+5]
         trg_s3_key = trg_path[s3_bucket_index+6:]
         #List all files in interim path
