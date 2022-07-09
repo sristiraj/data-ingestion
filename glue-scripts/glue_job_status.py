@@ -1,4 +1,4 @@
-def get_status_of_job_all_runs(job_name):
+def get_status_of_job_running(job_name):
    session = boto3.session.Session()
    glue_client = session.client('glue')
    run_status  = False
