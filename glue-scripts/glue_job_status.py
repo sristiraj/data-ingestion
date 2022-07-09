@@ -12,4 +12,4 @@ def get_status_of_job_all_runs(job_name):
       raise Exception("boto3 client error in get_status_of_job_all_runs: " + e.__str__())
    except Exception as e:
       raise Exception("Unexpected error in get_status_of_job_all_runs: " + e.__str__())
-    return run_status
+   return run_status
