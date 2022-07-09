@@ -1,0 +1,11 @@
+{
+        "isBase64Encoded": False,
+        "statusCode": 200,
+        "headers": { "headerName": "test-dev-param"},
+        "body": {
+             "row":[
+                   "col1":"value1",
+                   "col2":"value2"
+               ]
+        }
+ }
