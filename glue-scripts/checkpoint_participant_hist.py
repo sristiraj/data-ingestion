@@ -1,3 +1,11 @@
+#Add this class to ingestion script and call in sequence
+#  before_val = _checkpoint.read_checkpoint() if not None else '20000101_000000'
+#  _checkpoint.write_checkpoint()
+#  after_val = _checkpoint.read_checkpoint()
+# SQL query for ingestion should have CDC column which can take filter as partition_load_dt_tmstmp between {} and {}
+# in SQL transform class 
+# sql_query = sql_query.format(before_val["checkpoint_value"], after_val["checkpoint_value"])
+
 class _checkpoint:
     
     checkpoint_val = datetime.now().strftime("%Y%m%d_%H%M%S")
