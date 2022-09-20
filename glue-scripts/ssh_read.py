@@ -63,7 +63,7 @@ def main():
     conn = rc.connection()
     df = rc.readfile(conn, args["INPUT_PATH"], file_chunk)
     # df = rc.readfile(conn, "/home/ubuntu/hello.txt", file_chunk)
-    print(df)
+    # print(df)
     sparkDF=spark.createDataFrame(df) 
     sparkDF = sparkDF.withColumn("partition_load_dt_tmstmp",lit(datetime.now().strftime("%Y%m%d_%H%M%S")))
     sparkDF.write.format("parquet").mode("overwrite").save(args["OUTPUT_PATH"])
