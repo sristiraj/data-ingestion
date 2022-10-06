@@ -5,8 +5,7 @@ import org.apache.spark.sql.SparkSession
 def main(args: Array[String]): Unit ={
 	val spark = SparkSession
       .builder()
-      .appName("Spark SQL data sources example")
-      .config("spark.some.config.option", "some-value")
+      .appName("SparkRadiusAuthToOracle")
       .getOrCreate()
 	
 	val connectionProperties = new Properties()
