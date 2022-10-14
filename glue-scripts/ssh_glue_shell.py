@@ -95,7 +95,7 @@ def main():
         s3_client.upload_fileIO(data, args["OUTPUT_BUCKET"], args["OUTPUT_PATH"])
     elif args.get("IS_INPUT_PATH_DIR",False)  == True:    
         files = rc.list_files(args["INPUT_PATH"])
-        print(files)
+        logger.info(files)
         with ThreadPoolExecutor(max_workers=MAX_THREADPOOL_EXEC) as executors:
             futures_to_work = [executors.submit(s3_client.upload_fileobj, rc.reader(file[1]), args["OUTPUT_BUCKET"], os.path.join(args["OUTPUT_PATH"], file[0])) for file in files]
             for future in as_completed(futures_to_work):
