@@ -90,10 +90,11 @@ def main():
     session = boto3.Session()
     s3_client = DestinationS3Client(session)
     rc = RemoteSSHClient(args["HOSTNAME"], args["USERNAME"], args["PASSWORD"])
-    if args.get("IS_INPUT_PATH_DIR",False) == False:
+    
+    if args.get("IS_INPUT_PATH_DIR",False) == "False":
         data = rc.read(args["INPUT_PATH"])
         s3_client.upload_fileIO(data, args["OUTPUT_BUCKET"], args["OUTPUT_PATH"])
-    elif args.get("IS_INPUT_PATH_DIR",False)  == True:    
+    elif args.get("IS_INPUT_PATH_DIR",False)  == "True":    
         files = rc.list_files(args["INPUT_PATH"])
         logger.info(files)
         with ThreadPoolExecutor(max_workers=MAX_THREADPOOL_EXEC) as executors:
@@ -102,11 +103,10 @@ def main():
 
                 try:
                     data = future.result()
+                    print(data)
                     logger.info(data)
                 except Exception as exc:
                     print('%r generated an exception: %s' % (work, exc))
 
 
-
-if __name__=="__main__":
-    main()    
+main()    
