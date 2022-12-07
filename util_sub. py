@@ -1,0 +1,6 @@
+def compare_list(list1, list2):
+  subtracted = list()
+  for item1, item2 in zip(list1, list2):
+    item = item1 - item2
+    subtracted.append(item)
+  return subtracted 
