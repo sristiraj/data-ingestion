@@ -45,7 +45,7 @@ class ProcessedDataSink(object):
         self.params = params
     
     
-    def write_target_data_jdbc(self, df):
+    def write_target_data(self, df):
         df_out = df.toDF(params["output_schema"])
         df_out.write.format("parquet").mode("overwrite").option("path",self.params["output_s3_path"]).save()
         
@@ -66,5 +66,5 @@ if __name__ == "__main__":
     log_data["event"]="Write data to sink"
     print(log_data)
     #Write target data
-    ProcessedDataSink(params).write_target_data_jdbc(source)
+    ProcessedDataSink(params).write_target_data(source)
  
