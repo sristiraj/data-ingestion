@@ -10,7 +10,7 @@ import boto3
 import logging
 import json
 
-
+#Enable Logging to cloudwatch
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
@@ -21,6 +21,7 @@ handler.setFormatter(formatter)
 log.addHandler(handler)
 log.info("check")
 
+#Read params
 args = getResolvedOptions(sys.argv, ["REGION_NAME", "JOB_NAME", "INPUT_CONFIG_PATH", "OUTPUT_TMP_PATH"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -28,6 +29,7 @@ spark = glueContext.spark_session
 AWS_REGION = args["REGION_NAME"]
 
 class JobUtil:
+    """Job Util class for utility libs of job execution"""
     def __init__(self):
         self._name = "JobUtil"
     def process_params(self, params):
@@ -70,6 +72,7 @@ class ProcessedDataSource(object):
         self.params = params
         
     def read_source_data(self):
+        """Read data from s3 path into a spark dataframe"""
         df = spark.read.format("parquet").option("inferSchema","true").option("mergeSchema","true").option("path",self.params["input_s3_path"]).load()
         return df
   
@@ -79,6 +82,7 @@ class ProcessedDataSink(object):
     
     
     def write_target_data(self, df):
+        """Rename columns as per colum names supplied and write back to input path supplied in job config"""
         out_schema = list(self.params["output_schema_cols"])
         df_out = df.toDF(*out_schema)
         spark.conf.set("spark.sql.sources.partitionOverwriteMode","STATIC")
