@@ -10,7 +10,7 @@ import boto3
 import logging
 import json
 
-#Enable Logging to cloudwatch
+
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
@@ -21,7 +21,6 @@ handler.setFormatter(formatter)
 log.addHandler(handler)
 log.info("check")
 
-#Read params
 args = getResolvedOptions(sys.argv, ["REGION_NAME", "JOB_NAME", "INPUT_CONFIG_PATH", "OUTPUT_TMP_PATH"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -29,7 +28,6 @@ spark = glueContext.spark_session
 AWS_REGION = args["REGION_NAME"]
 
 class JobUtil:
-    """Job Util class for utility libs of job execution"""
     def __init__(self):
         self._name = "JobUtil"
     def process_params(self, params):
@@ -72,7 +70,6 @@ class ProcessedDataSource(object):
         self.params = params
         
     def read_source_data(self):
-        """Read data from s3 path into a spark dataframe"""
         df = spark.read.format("parquet").option("inferSchema","true").option("mergeSchema","true").option("path",self.params["input_s3_path"]).load()
         return df
   
@@ -81,8 +78,7 @@ class ProcessedDataSink(object):
         self.params = params
     
     
-    def write_target_data(self, df):
-        """Rename columns as per colum names supplied and write back to input path supplied in job config"""
+    def write_renamed_target_data(self, df):
         out_schema = list(self.params["output_schema_cols"])
         df_out = df.toDF(*out_schema)
         spark.conf.set("spark.sql.sources.partitionOverwriteMode","STATIC")
@@ -90,6 +86,17 @@ class ProcessedDataSink(object):
         spark.conf.set("spark.sql.sources.partitionOverwriteMode","DYNAMIC")
         df_temp = spark.read.format("parquet").option("path",self.params["tmp_dir_path"]).load()
         df_temp.write.format("parquet").mode("overwrite").option("path",self.params["input_s3_path"]).save()
+        return df_temp
+    
+    def write_target_data(self, df):
+        spark.conf.set("spark.sql.sources.partitionOverwriteMode","DYNAMIC")
+        df.write.format("parquet").mode("overwrite").option("path",self.params["curated_table_path"]).save()
+        
+    def exclude_cols(self, df):
+        columns = df.columns    
+        selected_columns = [c for c in columns if upper(c).startswith("STD")==False]
+        df_selected = df.select(*selected_columns)
+        return df_selected
         
 if __name__ == "__main__":
     
@@ -117,5 +124,16 @@ if __name__ == "__main__":
         log_data["event"]="Write data to sink"
         log.info(log_data)
         #Write target data
-        ProcessedDataSink(table).write_target_data(source)
+        target = ProcessedDataSink(table).write_renamed_target_data(source)
+        
+        #select only standard cols
+        curated = ProcessedDataSink(table).exclude_cols(target)
+        
+        #write curated
+        log_data["event"]="Write data to curated"
+        log.info(log_data)
+        
+        ProcessedDataSink(table).write_target_data(curated)        
+        
+        
  
