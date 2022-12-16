@@ -1,0 +1,11 @@
+{
+	"job_name":"rename_cols_and_remove_std_cols_for_curated",
+	"tables":[
+		{
+			"input_table_name":"stdschemarenametablefolder",
+			"input_s3_path":"s3://rawbucketdatalakesubramani001/stdschemarenametablefolder/load_date=20221216/",
+			"output_schema_cols":["id","name1"],
+			"curated_table_path":"s3://rawbucketdatalakesubramani001/curatedschematablefolder/load_date=20221216/"
+		}
+	]
+}
