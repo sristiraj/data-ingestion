@@ -94,7 +94,7 @@ class ProcessedDataSink(object):
         
     def exclude_cols(self, df):
         columns = df.columns    
-        selected_columns = [c for c in columns if upper(c).startswith("STD")==False]
+        selected_columns = [c for c in columns if c.upper().startswith("STD")==False]
         df_selected = df.select(*selected_columns)
         return df_selected
         
