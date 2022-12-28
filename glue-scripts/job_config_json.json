@@ -9,7 +9,8 @@
 			"output_schema_cols":["id","name1"],
 			"curated_table_path":"s3://rawbucketdatalakesubramani001/curatedschematablefolder/load_date=20221216/",
 			"curated_db_name":"default",
-			"curated_table_name":"table2",			
+			"curated_table_name":"table2",		
+			"partition_col_name":"partition_load_date"
 		}
 	]
 }
