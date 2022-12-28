@@ -86,11 +86,50 @@ class ProcessedDataSink(object):
         spark.conf.set("spark.sql.sources.partitionOverwriteMode","DYNAMIC")
         df_temp = spark.read.format("parquet").option("path",self.params["tmp_dir_path"]).load()
         df_temp.write.format("parquet").mode("overwrite").option("path",self.params["input_s3_path"]).save()
+        base_path = self.params["input_s3_path"].rstrip("/").rfind("/")
+        df_input = spark.read.format("parquet").option("mergeSchema","true").load(base_path)
+        df_input_schema = df_input.schema.json()
+        try:
+            df_table = spark.table(self.params["input_db_name"]+"."+self.params["input_table_name"])
+            df_table_schema =  df_temp.schema.json()
+        except Exception as e:
+            df_table = None
+            df_table_schema = {}
+        if df_table_schema != df_input_schema:
+            ddl = spark.sparkContext._jvm.org.apache.spark.sql.types.DataType.fromJson(df_input_schema).toDDL()
+            spark.sql("CREATE TABLE IF NOT EXISTS {0} ({1}) PARTITIONED BY ({2} string) STORED AS PARQUET LOCATION '{3}' ".format(self.params["input_db_name"]+"."+self.params["input_table_name"], ddl, self.params["partition_col_name"], base_path))
+            spark.sql("MSCK REPAIR TABLE {}".format(self.params["input_db_name"]+"."+self.params["input_table_name"]))
+        else:
+            spark.sql("MSCK REPAIR TABLE {}".format(self.params["input_db_name"]+"."+self.params["input_table_name"]))
+            
+            
+            
+            
+        
         return df_temp
     
     def write_target_data(self, df):
         spark.conf.set("spark.sql.sources.partitionOverwriteMode","DYNAMIC")
         df.write.format("parquet").mode("overwrite").option("path",self.params["curated_table_path"]).save()
+        
+        base_path = self.params["curated_table_path"].rstrip("/").rfind("/")
+        df_input = spark.read.format("parquet").option("mergeSchema","true").load(base_path)
+        df_input_schema = df_input.schema.json()
+        try:
+            df_table = spark.table(self.params["curated_db_name"]+"."+self.params["curated_table_name"])
+            df_table_schema =  df_temp.schema.json()
+        except Exception as e:
+            df_table = None
+            df_table_schema = {}
+        if df_table_schema != df_input_schema:
+            ddl = spark.sparkContext._jvm.org.apache.spark.sql.types.DataType.fromJson(df_input_schema).toDDL()
+            spark.sql("CREATE TABLE IF NOT EXISTS {0} ({1}) PARTITIONED BY ({2} string) STORED AS PARQUET LOCATION '{3}' ".format(self.params["curated_db_name"]+"."+self.params["curated_table_name"], ddl, self.params["partition_col_name"], base_path))
+            spark.sql("MSCK REPAIR TABLE {}".format(self.params["curated_db_name"]+"."+self.params["curated_table_name"]))
+        else:
+            spark.sql("MSCK REPAIR TABLE {}".format(self.params["curated_db_name"]+"."+self.params["curated_table_name"]))
+            
+       
+        
         
     def exclude_cols(self, df):
         columns = df.columns    
