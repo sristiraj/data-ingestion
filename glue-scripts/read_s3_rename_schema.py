@@ -79,8 +79,9 @@ class ProcessedDataSink(object):
     
     
     def write_renamed_target_data(self, df):
-        out_schema = list(self.params["output_schema_cols"])
-        df_out = df.toDF(*out_schema)
+        out_schema = ",".join(list(self.params["output_schema_cols"]))
+        #df_out = df.toDF(*out_schema)
+        df_out = spark.createDataFrame(df.rdd, out_schema)
         spark.conf.set("spark.sql.sources.partitionOverwriteMode","STATIC")
         df_out.write.format("parquet").mode("overwrite").option("path",self.params["tmp_dir_path"]).save()
         spark.conf.set("spark.sql.sources.partitionOverwriteMode","DYNAMIC")
