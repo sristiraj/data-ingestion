@@ -1,0 +1,28 @@
+from snowflake import connector
+import pandas as pd
+from snowflake.connector.pandas_tools import write_pandas
+
+
+data = [[1,"hello"],[2,"hi12"]]
+df = pd.DataFrame(data)
+df.columns = ["id","name"]
+con = connector.connect(
+    user='RAJSRISTI',
+    password='',
+    account='kappijm-',
+    warehouse="compute_wh",
+    database="default",
+    schema="public",
+    role="ACCOUNTADMIN",
+    session_parameters={
+        'QUERY_TAG': 'EndOfMonthFinancials',
+    }
+)
+
+df_data = df.values.tolist()
+db_cursor_sf = con.cursor() 
+db_cursor_sf.execute("""create temporary table sample_table_temp(id int, name varchar(100))""")
+db_cursor_sf.executemany("""insert into sample_table_temp values(%s,%s)""",df_data)
+db_cursor_sf.execute("""merge into sample_table using sample_table_temp on sample_table.id=sample_table_temp.id 
+                    when matched then update set sample_table.name=sample_table_temp.name
+                    when not matched then insert(id,name) values(sample_table_temp.id, sample_table_temp.name)""")
