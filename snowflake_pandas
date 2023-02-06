@@ -1,11 +1,14 @@
 from snowflake import connector
 import pandas as pd
 from snowflake.connector.pandas_tools import write_pandas
-
+import datetime as dt
+from typing import List
+import snowflake
 
 data = [[1,"hello"],[2,"hi12"]]
 df = pd.DataFrame(data)
 df.columns = ["id","name"]
+df["tt"]=dt.datetime.now()
 con = connector.connect(
     user='RAJSRISTI',
     password='',
@@ -19,10 +22,30 @@ con = connector.connect(
     }
 )
 
-df_data = df.values.tolist()
+def applySFDataTypeCompatibility(data, dtypes = None) -> List[List]:
+    """Apply data type compatibility changes"""
+    cols = [(i,c) for i,c in enumerate(data.columns) if data[c].dtype in ['datetime64[ns]']]
+    # df = data[cols]
+
+    data_list = data.values.tolist()
+    
+    for z, row in enumerate(data_list):
+        for i, c in cols:
+            data_list[z][i]=data_list[z][i].to_pydatetime()
+        data_list[z] = tuple(data_list[z])
+    # transformed_data = [ for row in data]
+    return data_list
+
+snowflake.connector.paramstyle='format'
+
+df_data = applySFDataTypeCompatibility(df, df.dtypes)
+
+print(df_data)
 db_cursor_sf = con.cursor() 
-db_cursor_sf.execute("""create temporary table sample_table_temp(id int, name varchar(100))""")
-db_cursor_sf.executemany("""insert into sample_table_temp values(%s,%s)""",df_data)
-db_cursor_sf.execute("""merge into sample_table using sample_table_temp on sample_table.id=sample_table_temp.id 
-                    when matched then update set sample_table.name=sample_table_temp.name
-                    when not matched then insert(id,name) values(sample_table_temp.id, sample_table_temp.name)""")
+db_cursor_sf.execute("""create temporary table sample_table_temp(id int, name varchar(100), tt timestamp_ntz)""")
+db_cursor_sf.executemany("""insert into sample_table_temp values(%s,%s,%s)""",df_data)
+# for r in df_data:
+#     db_cursor_sf.execute("""insert into sample_table_temp values(%s,%s,%s)""",df_data[0], df_data[1], df_data[])
+db_cursor_sf.execute("""merge into sample4 sample_table using sample_table_temp on sample_table.id=sample_table_temp.id 
+                    when matched then update set sample_table.name=sample_table_temp.name, sample_table.tt=sample_table_temp.tt
+                    when not matched then insert(id,name,tt) values(sample_table_temp.id, sample_table_temp.name,sample_table_temp.tt)""")
