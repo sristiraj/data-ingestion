@@ -23,3 +23,10 @@ def retry(times, exceptions):
             return func(*args, **kwargs)
         return newfn
     return decorator
+
+@retry(times=3, exceptions=(ValueError, TypeError))
+def sample():
+    pass
+
+
+sample()
