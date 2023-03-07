@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s]: %(message)s")
 
-args = {"JOB_NAME":"SFTP_SPARK","REGION":"us-east-1", "SFTP_HOST":"localhost", "SFTP_USER":"wicked", "SFTP_PORT":"22", "SFTP_PASS":"troy","SFTP_INPUT_PATH":"/home/wicked/Downloads/shipment","SNOW_USER":"RAJSRISTISNOWFLAKE", "SNOW_PASSWORD":"gOOgle@2340178", "SNOW_ACCOUNT": "NCLUGRS-OA64655", "SNOW_ROLE":"SYSADMIN", "SNOWFLAKE_WH":"COMPUTE_WH", "SNOWFLAKE_DB":"sample_db", "SNOWFLAKE_SCHEMA":"public", "SNOWFLAKE_TABLE":"shipment", "CHECKPOINT_LOC":"_checkpoint/"}
+args = {"JOB_NAME":"SFTP_SPARK","REGION":"us-east-1", "SFTP_HOST":"localhost", "SFTP_USER":"wicked", "SFTP_PORT":"22", "SFTP_PASS":"","SFTP_INPUT_PATH":"/home/wicked/Downloads/shipment","SNOW_USER":"RAJSRISTISNOWFLAKE", "SNOW_PASSWORD":"", "SNOW_ACCOUNT": "NCLUGRS-OA64655", "SNOW_ROLE":"SYSADMIN", "SNOWFLAKE_WH":"COMPUTE_WH", "SNOWFLAKE_DB":"sample_db", "SNOWFLAKE_SCHEMA":"public", "SNOWFLAKE_TABLE":"shipment", "CHECKPOINT_LOC":"_checkpoint/"}
 
 sfparams = {
   "sfURL" : "{}.snowflakecomputing.com".format(args["SNOW_ACCOUNT"]),
