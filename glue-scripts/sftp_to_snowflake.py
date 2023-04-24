@@ -201,6 +201,18 @@ def get_sftp_files_list(sftp_client, sftp_dir, checkpoint_loc):
             filelist.append((sftp_dir.rstrip("/")+"/",entry.filename))
     return filelist
 
+def get_sftp_trigger_files_list(sftp_client, sftp_dir, checkpoint_loc):
+    filelist = []
+    processed_files = get_processed_files(checkpoint_loc)
+
+    for entry in sftp_client.listdir_attr(sftp_dir):
+        mode = entry.st_mode
+        if S_ISDIR(mode):
+            pass
+        elif S_ISREG(mode) and (entry.filename[len(entry.filename)-3:]=="trg" or entry.filename[len(entry.filename)-3:]=="TRG") and entry.filename not in processed_files:
+            filelist.append((sftp_dir.rstrip("/")+"/",entry.filename))
+    return filelist
+  
 def snowflake_write(file_path, database, schema, snowflake_table, checkpoint_location):
     logger.info("writing file {} to snowflake".format(file_path))
     df = spark.read.csv(file_path, header=True)
@@ -210,8 +222,11 @@ def snowflake_write(file_path, database, schema, snowflake_table, checkpoint_loc
     df.write.format("snowflake").options(**sfparams).option("dbtable", "public.shipment").mode("append").save()
 
     num_rows = df.count()
+
+    
     df_checkpoint = spark.createDataFrame([(file_path,num_rows)],["file_name","rows_processed"])
     df_checkpoint.repartition(1).write.format("json").mode("append").save(checkpoint_location)
+
     # success, num_chunks, num_rows, output = write_pandas(
     #             conn=snow_conn,
     #             df=df,
@@ -219,6 +234,36 @@ def snowflake_write(file_path, database, schema, snowflake_table, checkpoint_loc
     #             schema=schema
     #         )
     logger.info("File {} written to snowflake with {} num. of rows written".format(file_path, num_rows))        
+
+def validate_sf_records(trigger_file_list, job_run_id, trigger_checkpoint_location, snowflake_temp_table, snowflake_main_table):
+    '''Validate this batch if file loading to snowflake temp table and load to main table'''
+    schema = StructType([
+        StructField("filename",StringType(), True),
+        StructField("tmstmp",StringType(), True),
+        StructField("record_count",StringType(), True),
+        StructField("record_checksum",StringType(), True)])
+    df = spark.read.schema(schema).csv(trigger_file_list, sep="|", header=False)
+    count_of_records = df.sum("record_count")
+    checksum_of_records = df.sum("record_checksum")
+    query = f"select count(1) from {snowflake_temp_table} where etl_process_id='{job_run_id}'"
+    
+    df_sf = spark.read \
+    .format("snowflake") \
+    .options(**sfparams) \
+    .option("query", query) \
+    .load()
+
+    count_of_sf_records = df_sf.count()
+    if (count_of_records == count_of_sf_records):
+        return True
+    else:
+        return False
+
+def transfer_sf_temp_to_main(temp_table, main_table):
+    query = f"INSERT INTO {main_table} SELECT * FROM {temp_table}"
+
+    # Execute the SQL query using spark.sql
+    spark.sql(query)
 
 def sftp_copy(file_attr):
     user = file_attr["username"]
@@ -255,6 +300,7 @@ def sftp_copy(file_attr):
 
         snowflake_write(file_attr["filename"], file_attr["snowflake_db"], file_attr["snowflake_schema"], file_attr["snowflake_table"], file_attr["checkpoint_location"])
 
+
 def main():
     # args = getResolvedOptions(sys.argv, ["JOB_NAME","REGION_NAME", "SFTP_HOST", "SFTP_USER", "SFTP_PORT", "SFTP_PASS","SFTP_INPUT_PATH","S3_OUTPUT_PATH"])    #sftp server
     host = args["SFTP_HOST"]
@@ -266,7 +312,12 @@ def main():
     snowflake_db = args["SNOWFLAKE_DB"]
     snowflake_schema = args["SNOWFLAKE_SCHEMA"]
     snowflake_table = args["SNOWFLAKE_TABLE"]
+    ############################
+    snowflake_temp_table = args["SNOWFLAKE_TEMP_TABLE"]
     checkpoint_location = args["CHECKPOINT_LOC"]
+    #Trigger Checkpint ##################
+    trigger_checkpoint_location = args["TRIGGER_CHECKPOINT_LOC"]
+    job_run_id = args['JOB_RUN_ID']
 
 
     transport = Transport((host, port))
@@ -284,6 +335,8 @@ def main():
         step_size = 4 * 1024 * 1024
 
         filelist = get_sftp_files_list(sftp_client, remote_file_path, checkpoint_location)
+        #Trigger list file ##################
+        trigger_file_list = get_sftp_trigger_files_list(sftp_client, remote_file_path, trigger_checkpoint_location)
 
         fileiter = [{"host":host, "port":port, "username": username, "password": password, "remote_dir":f[0], "filename":f[1], "snowflake_db":snowflake_db, "snowflake_schema": snowflake_schema, "snowflake_table": snowflake_table, "checkpoint_location": checkpoint_location} for f in filelist]
 
@@ -293,6 +346,8 @@ def main():
         for file_attr, result  in zip(fileiter, executor.map(sftp_copy, fileiter)):
             print("File {} processed with result {}".format(file_attr["filename"], result))
 
+    if(validate_sf_records(trigger_file_list, job_run_id, trigger_checkpoint_location)):
+        transfer_sf_temp_to_main(snowflake_temp_table, snowflake_table)
 
 try:
 
