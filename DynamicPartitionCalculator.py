@@ -36,21 +36,29 @@ class DynamicPartitionCalculator(object):
         # Sampling factor to get sample of dataframe and estimate size of full dataframe. 
         # Sample should be in fractional value.
         # If original dataframe row count is greater than 1000000 then sample 0.06 else take whole dataframe 
-        SAMPLING_FACTOR = 0.06 if df_count > 1000000 else 1
+        SAMPLING_FACTOR = 0.06 if df_count > 1000000 else 1.0
         df_sample = df.sample(SAMPLING_FACTOR)
-        df_sample.write.format("parquet").mode("overwrite").save("_data/application/{}".format(str(uuid.uuid1())))
+        uui = str(uuid.uuid1())
+        df_sample.write.format("parquet").mode("overwrite").save("_data/application/{}".format(uui))
         df_sample.cache()
         df_sample_count = df_sample.count()
+        logging.info("Count of dataframe {}".format(df_count))
+        logging.info("count of sampled dataframe {}".format(df_sample_count))
 
         # Property works in spark 2.4 until 3.2. For spark 3.3+, use of AQE and spark.sql.adaptive.advisoryPartitionSizeInBytes, spark.sql.adaptive.coalescePartitions.minPartitionSize recommended
-        df_size_in_bytes = spark._jsparkSession.sessionState().executePlan(df_sample._jdf.queryExecution().logical()).optimizedPlan().stats().sizeInBytes()/SAMPLING_FACTOR
+        sc = spark.sparkContext
+        Path = sc._gateway.jvm.org.apache.hadoop.fs.Path
+        conf = sc._jsc.hadoopConfiguration()
+        data_folder = Path("_data/application/{}".format(uui))
+        fs = data_folder.getFileSystem(conf)
+        df_size_in_bytes = fs.getContentSummary(Path("_data/application/{}".format(uui))).getLength()
         df_size_in_mbs = int(df_size_in_bytes / (1024 ** 2))
         logging.info("Total data frame size in MB: %s", df_size_in_mbs)
+
         # get number of partition based on total df size and data size per partition. 
         # If df size is less than target_files_size_in_mb then default no_of_partitions to 1
         no_of_partitions = math.ceil(df_size_in_mbs / target_files_size_in_mb) if (df_size_in_mbs / target_files_size_in_mb)>1 else 1
         logging.info("number of partitions %s for input df size %s MB to achieve target files size %s in MB", no_of_partitions, df_size_in_mbs, target_files_size_in_mb)
-        sc = spark.sparkContext
         total_executors = sc.getConf().get("spark.executor.instances", str(no_of_partitions))
         cores_per_executor = sc.getConf().get("spark.executor.cores", str(1))
         total_core = int(total_executors) * int(cores_per_executor)
