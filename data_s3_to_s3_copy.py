@@ -65,3 +65,5 @@ def glue_handler():
             destination_key = get_destination_key(source_key, args['DESTINATION_PREFIX'])
             copy_file_s3_to_s3(source_bucket, source_key, destination_bucket, destination_key)
             logger.info(f"File s3://{source_bucket}/{source_key} uploaded to destination s3 bucket s3://{destination_bucket}/{destination_key}")
+if __name__ == "__main__":
+    glue_handler()
