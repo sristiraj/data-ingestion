@@ -10,6 +10,13 @@ logger.setLevel(logging.INFO)
 
 s3 = boto3.resource('s3')
 
+def checkpoint_file_copy_success(checkpoint_bucket, checkpoint_key, source_bucket, source_key):
+    pass
+
+def checkpoint_file_copy_error(checkpoint_bucket, checkpoint_key, source_bucket, source_key):
+    pass
+
+
 #Placeholder function to modify destination key based on source key if needed
 def get_destination_key(source_key, destination_key):
     return destination_key
@@ -32,13 +39,19 @@ def copy_file_s3_to_s3(source_bucket, source_key, destination_bucket, destinatio
 
 #Lambda handler
 def lambda_handler(event, context):
+    
     logger.info("New files uploaded to the source bucket. Starting lambda function.")
     source_key = event['Records'][0]['s3']['object']['key'] 
     source_bucket = event['Records'][0]['s3']['bucket']['name']
-    destination_bucket = os.environ['destination_bucket']
-    destination_prefix = os.environ['destination_prefix']
-    destination_key = get_destination_key(source_key, destination_prefix)
-    copy_file_s3_to_s3(source_bucket, source_key, destination_bucket, destination_key)
+    try:
+        destination_bucket = os.environ['destination_bucket']
+        destination_prefix = os.environ['destination_prefix']
+        destination_key = get_destination_key(source_key, destination_prefix)
+        copy_file_s3_to_s3(source_bucket, source_key, destination_bucket, destination_key)
+    except Exception as e:
+        checkpoint_file_copy_error(checkpoint_bucket, checkpoint_key, source_bucket, source_key)
+    
+    checkpoint_file_copy_success(checkpoint_bucket, checkpoint_key, source_bucket, source_key)
     logger.info(f"File s3://{source_bucket}/{source_key} uploaded to destination s3 bucket s3://{destination_bucket}/{destination_key}")
     
     
@@ -61,9 +74,15 @@ def glue_handler():
             event = json.loads(event_payload['eventBody'])
             source_key = event['Records'][0]['s3']['object']['key'] 
             source_bucket = event['Records'][0]['s3']['bucket']['name'] 
-            destination_bucket = args['DESTINATION_BUCKET']
-            destination_key = get_destination_key(source_key, args['DESTINATION_PREFIX'])
-            copy_file_s3_to_s3(source_bucket, source_key, destination_bucket, destination_key)
+            try:
+                destination_bucket = args['DESTINATION_BUCKET']
+                destination_key = get_destination_key(source_key, args['DESTINATION_PREFIX'])
+                copy_file_s3_to_s3(source_bucket, source_key, destination_bucket, destination_key)
+            except Exception as e:
+                checkpoint_file_copy_error(checkpoint_bucket, checkpoint_key, source_bucket, source_key)
+    
+            checkpoint_file_copy_success(checkpoint_bucket, checkpoint_key, source_bucket, source_key)    
             logger.info(f"File s3://{source_bucket}/{source_key} uploaded to destination s3 bucket s3://{destination_bucket}/{destination_key}")
+            
 if __name__ == "__main__":
     glue_handler()
