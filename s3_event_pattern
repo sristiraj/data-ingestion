@@ -1,0 +1,14 @@
+{
+  "source": ["aws.s3"],
+  "detail-type": ["Object Created"],
+  "detail": {
+    "bucket": {
+      "name": ["aws-athena-query-results-bucket-sales"]
+    },
+    "object": {
+      "size": [{
+        "numeric": ["<=", 1048576]
+      }]
+    }
+  }
+}
