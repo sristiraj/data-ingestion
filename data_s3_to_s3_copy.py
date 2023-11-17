@@ -1,4 +1,3 @@
-import boto3 import botocore
 import boto3
 import json
 import os
@@ -29,13 +28,10 @@ def copy_file_s3_to_s3(source_bucket, source_key, destination_bucket, destinatio
         response = s3.meta.client.copy(source, destination_bucket, destination_key)
         logger.info("File copied to the destination bucket successfully!")
         
-    except botocore.exceptions.ClientError as error:
+    except Exception as error:
         logger.error("There was an error copying the file to the destination bucket")
         print('Error Message: {}'.format(error))
-        
-    except botocore.exceptions.ParamValidationError as error:
-        logger.error("Missing required parameters while calling the API.")
-        print('Error Message: {}'.format(error))
+   
 
 #Lambda handler
 def lambda_handler(event, context):
