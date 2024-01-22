@@ -1,0 +1,53 @@
+Trust policy:
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "pipes.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "541627396844",
+                    "aws:SourceArn": "arn:aws:pipes:us-east-1:541627396844:pipe/Test"
+                }
+            }
+        }
+    ]
+}
+
+Permission:
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+            ],
+            "Resource": [
+                "arn:aws:sqs:us-east-1:541627396844:Logging-Queue-dev"
+            ]
+        }
+    ]
+}
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "states:StartExecution"
+            ],
+            "Resource": [
+                "arn:aws:states:*:*:stateMachine:*",
+            ]
+        }
+    ]
+}
