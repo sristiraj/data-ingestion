@@ -1,0 +1,122 @@
+{
+	"jobConfig": {
+		"name": "delta_job",
+		"description": "",
+		"role": "arn:aws:iam::541627396844:role/RRSSR27_AWS_APP01_STTM_DYNAMO_ACCESS",
+		"command": "glueetl",
+		"version": "4.0",
+		"runtime": null,
+		"workerType": "G.1X",
+		"numberOfWorkers": 2,
+		"maxCapacity": 2,
+		"maxRetries": 0,
+		"timeout": 2880,
+		"maxConcurrentRuns": 2,
+		"security": "none",
+		"scriptName": "delta_job.py",
+		"scriptLocation": "s3://aws-glue-assets-541627396844-us-east-1/scripts/",
+		"language": "python-3",
+		"spark": true,
+		"sparkConfiguration": "standard",
+		"jobParameters": [
+			{
+				"key": "--JOB_NAME",
+				"value": "delta_job",
+				"existing": false
+			},
+			{
+				"key": "--additional-python-modules",
+				"value": "retry",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--SQS_QUEUE_URL",
+				"value": "https://sqs.us-east-1.amazonaws.com/541627396844/Logging-Queue-dev",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--QUARANTINE_LOCATION",
+				"value": "s3://srrawbucket001/quarantine",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--FILE_FORMAT",
+				"value": "csv",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--FILE_DELIMITER",
+				"value": ",",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--FILE_HAS_HEADER",
+				"value": "Yes",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--FILE_SCHEMA",
+				"value": "a string, b int",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--TABLE_NAME",
+				"value": "test.test",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--DB_SECRET_NAME",
+				"value": " ",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--FILE_DATE_FORMAT",
+				"value": "yyyy-MM-dd",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			},
+			{
+				"key": "--FILE_TIMESTAMP_FORMAT",
+				"value": "yyyy-MM-dd'T'HH:mm:ss",
+				"existing": false,
+				"markedForRemoval": false,
+				"valid": true
+			}
+		],
+		"tags": [],
+		"jobMode": "DEVELOPER_MODE",
+		"createdOn": "2023-02-01T10:58:14.497Z",
+		"developerMode": true,
+		"connectionsList": [],
+		"temporaryDirectory": "s3://aws-glue-assets-541627396844-us-east-1/temporary/",
+		"glueHiveMetastore": true,
+		"etlAutoTuning": false,
+		"metrics": true,
+		"bookmark": "job-bookmark-disable",
+		"sparkPath": "s3://aws-glue-assets-541627396844-us-east-1/sparkHistoryLogs/",
+		"flexExecution": false,
+		"minFlexWorkers": null,
+		"pythonPath": null
+	},
+	"hasBeenSaved": false,
+	"script": "import sys\nimport boto3\nimport time\nfrom retry import retry\nimport json\nfrom botocore.exceptions import ClientError\nfrom awsglue.transforms import *\nfrom awsglue.utils import getResolvedOptions\nfrom pyspark.context import SparkContext\nfrom awsglue.context import GlueContext\nfrom awsglue.job import Job\n\n'''######################\nSet the glue parameters as per the parameters list below\nSet the glue retry limit to 0.\nSet the glue timeout to a proper value (30 minutes)\nChange the timeout value in code for const variable GLUE_TIMEOUT\nSet the additional python module dependency [\"retry\"]\n\n######################'''\n\nGLUE_TIMEOUT = 30 # In Seconds\nREGION_NAME = \"us-east-1\"\n## @params: [JOB_NAME]\nargs = getResolvedOptions(sys.argv, ['JOB_NAME', 'SQS_QUEUE_URL', 'QUARANTINE_LOCATION', \"FILE_FORMAT\", \"FILE_DELIMITER\", \"FILE_HAS_HEADER\", \"FILE_SCHEMA\", \"TABLE_NAME\", \"DB_SECRET_NAME\", \"FILE_DATE_FORMAT\", \"FILE_TIMESTAMP_FORMAT\"])\n\nsqs_queue_url = args.get(\"SQS_QUEUE_URL\")\ns3_quarantine_loc = args.get(\"QUARANTINE_LOCATION\")\nfile_format = args.get(\"FILE_FORMAT\")\nfile_delimiter = args.get(\"FILE_DELIMITER\",\",\")\nfile_has_header = args.get(\"FILE_HAS_HEADER\",\"yes\")\nfile_schema = args.get(\"FILE_SCHEMA\")\ntable_name = args.get(\"TABLE_NAME\")\ndb_secret = args.get(\"DB_SECRET_NAME\")\ndate_format = args.get(\"FILE_DATE_FORMAT\")\ntimestamp_format = args.get(\"FILE_TIMESTAMP_FORMAT\")\n\nsc = SparkContext()\nglueContext = GlueContext(sc)\nspark = glueContext.spark_session\njob = Job(glueContext)\njob.init(args['JOB_NAME'], args)\n\nclass FileFormatException(Exception):\n    pass\n\ndef get_secret(secret_name):\n    # secret_name = \"MySecretName\"\n    region_name = REGION_NAME\n\n    session = boto3.session.Session()\n    client = session.client(\n        service_name='secretsmanager',\n        region_name=region_name,\n    )\n\n    try:\n        get_secret_value_response = client.get_secret_value(\n            SecretId=secret_name\n        )\n    except ClientError as e:\n        if e.response['Error']['Code'] == 'ResourceNotFoundException':\n            print(\"The requested secret \" + secret_name + \" was not found\")\n        elif e.response['Error']['Code'] == 'InvalidRequestException':\n            print(\"The request was invalid due to:\", e)\n        elif e.response['Error']['Code'] == 'InvalidParameterException':\n            print(\"The request had invalid params:\", e)\n        elif e.response['Error']['Code'] == 'DecryptionFailure':\n            print(\"The requested secret can't be decrypted using the provided KMS key:\", e)\n        elif e.response['Error']['Code'] == 'InternalServiceError':\n            print(\"An error occurred on service side:\", e)\n        raise e\n    else:\n        # Secrets Manager decrypts the secret value using the associated KMS CMK\n        # Depending on whether the secret was a string or binary, only one of these fields will be populated\n        if 'SecretString' in get_secret_value_response:\n            text_secret_data = get_secret_value_response['SecretString']\n        else:\n            binary_secret_data = get_secret_value_response['SecretBinary']\n\n        # Your code goes here.\n        \ndef is_valid_s3_path(s3_path):\n    if s3_path.startswith(\"s3://\"):\n        return True\n    else:\n        return False\n        \ndef get_bucket_from_path(s3_path):\n    if not is_valid_s3_path(s3_path):\n        print(\"S3 Path not in correct format. Use format s3://<bucket>/path\")\n        raise ValueError(\"S3 Path not in correct format. Use format s3://<bucket>/path\")\n        \n    base_path = s3_path.replace(\"s3://\",\"\")\n    if len(base_path.replace(\"/\")) < len(base_path):\n        return base_path[:base_path.find(\"/\")]\n    else:\n        return base_path\n\ndef get_key_from_path(s3_path):\n    if not is_valid_s3_path(s3_path):\n        print(\"S3 Path not in correct format. Use format s3://<bucket>/path\")\n        raise ValueError(\"S3 Path not in correct format. Use format s3://<bucket>/path\")\n    base_path = s3_path.replace(\"s3://\",\"\")\n    if len(base_path.replace(\"/\")) < len(base_path):\n        bucket = base_path[:base_path.find(\"/\")]\n        return base_path.replace(\"{}/\".format(bucket),\"\")\n    else:\n        return None\n        \ndef getJobName():\n    return args[\"JOB_NAME\"]\n\ndef getJobCurrentRun(job_name):\n    return args[\"JOB_RUN_ID\"]\n\n@retry(Exception, tries=3, delay=2)\ndef checkGlueJobStatus():\n    session = boto3.session.Session()\n    glue_client = session.client('glue')\n    try:\n        job_name = getJobName()\n        current_run_id = getJobCurrentRun(job_name)\n        print(\"Current run ID: {}\".format(current_run_id))\n        status_details = glue_client.get_job_runs(JobName=job_name, MaxResults=10)\n        running_status = []\n        for status in status_details.get(\"JobRuns\",[]):\n            if status.get(\"JobRunState\",\"UNKNOWN\") in [\"RUNNING\",\"STARTING\",\"WAITING\"]:\n                running_status.append(status)\n                \n        #Only allow one run of glue job. For next job stop the processing\n        if running_status is not None and len(running_status)>=2 and running_status[0].get(\"Id\") != current_run_id:\n            glue_client.batch_stop_job_run(JobName=job_name, JobRunIds=[current_run_id])\n        \n    except Exception as e:\n        raise e\n\ndef write_file(df):\n    df.write.format(\"parquet\").mode(\"append\").save(s3_quarantine_loc+\"data\")\n    \ndef load_file(file_bucket, file_key):\n    file_header = True if file_has_header.lower() == \"yes\" else False\n    try:\n        df = spark.read.format(file_format).\\\n            option(\"header\",file_header).\\\n            option(\"dateFormat\",\"date_format\").\\\n            option(\"timestampNTZFormat\", timestamp_format).\\\n            schema(file_schema).\\\n            option(\"mode\", \"FAILFAST\").load()\n    except Exception as e:\n        print(\"Error: Reading file from s3://{}/{}\".format(file_bucket, file_key))\n        raise FileFormatException(\"Error reading file\")\n        \n    write_file(df)\n\n@retry(Exception, tries=2, delay=10)    \ndef s3_file_move(file_bucket, file_key, target_path):\n    s3_resource = boto3.client('s3')\n    target_bucket = get_bucket_from_path(target_path)\n    target_key = get_key_from_path(target_path)\n    \n    copy_source = {'Bucket': file_bucket, 'Key': file_key}\n    client.copy_object(Bucket = target_bucket, CopySource = copy_source, Key = target_key.rstrip(\"/\")+\"/\" + file_key)\n    client.delete_object(Bucket = file_bucket, Key = file_key)\n\n@retry(Exception, tries=2, delay=10)\ndef delete_sqs_message(sqs_queue_url, message_handle):\n    session = boto3.session.Session()\n    sqs = session.client('sqs')\n    try:\n        print(\"Deleting message with message handle {}\".format(message_handle))\n        # Delete received message from queue\n        sqs.delete_message(\n            QueueUrl=sqs_queue_url,\n            ReceiptHandle=message_handle\n        )\n    except Exception as e:\n        print(\"Error: Failed to delete processed file SQS message. Retrying...\")\n        raise e\n\ndef read_sqs():\n    session = boto3.session.Session()\n    sqs = session.client('sqs')\n    response = sqs.receive_message(\n        QueueUrl=sqs_queue_url,\n        AttributeNames=[\n            'SentTimestamp'\n        ],\n        MaxNumberOfMessages=10,\n        MessageAttributeNames=[\n            'All'\n        ],\n        VisibilityTimeout=GLUE_TIMEOUT, # Total estimated time to process files pertaining to SQS messages with S3 object paths. Use GLUE_TIMEOUT\n        WaitTimeSeconds=0\n    )\n    return response\n    \ndef process_files_from_sqs():\n    '''Read SQS and process files based on put object event from S3 bucket'''\n    retry_new_messages = 0\n    print(\"Start reading SQS for messages\")\n    # Reading messages from SQS\n    response = read_sqs()\n    total_files_processed = 0\n    \n    # IF messages exists in SQS for new files\n    if response is not None and len(response.get('Messages',[]))>0:\n        retry_new_messages = 1\n        messages = response['Messages']\n        file_bucket = \"\"\n        file_key = \"\"\n        for message in messages:\n            print(message)\n            print(\"========================\")\n\n            # print(message[\"Body\"][\"detail\"][\"bucket\"])\n            file_bucket = json.loads(message[\"Body\"])[\"detail\"][\"bucket\"][\"name\"]\n            file_key = json.loads(message[\"Body\"])[\"detail\"][\"object\"][\"key\"]\n            receipt_handle = message['ReceiptHandle']\n            try:\n                load_file(file_bucket, file_key)\n                delete_sqs_message(sqs_queue_url, receipt_handle)\n                total_files_processed += 1\n            except FileFormatException as e:\n                file_move(file_bucket, file_key)\n                delete_sqs_message(sqs_queue_url, receipt_handle)\n    if retry_new_messages == 1:\n        print(\"Retrying for more messages.\")\n        total_files_processed+= process_files_from_sqs()\n    return total_files_processed\n    \ndef main():        \n    checkGlueJobStatus()\n    total_files_processed = process_files_from_sqs()\n\n    print(\"Successfully completed processing {} files from SQS\".format(total_files_processed))\n# secret = get_secret(db_secret)\nmain()\njob.commit()"
+}
