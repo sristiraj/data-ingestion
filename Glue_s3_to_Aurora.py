@@ -129,7 +129,7 @@ def checkGlueJobStatus():
                 running_status.append(status)
                 
         #Only allow one run of glue job. For next job stop the processing
-        if running_status is not None and len(running_status)>=2:
+        if running_status is not None and len(running_status)>=2 and running_status[0].get("Id") != current_run_id:
             glue_client.batch_stop_job_run(JobName=job_name, JobRunIds=[current_run_id])
         
     except Exception as e:
@@ -200,7 +200,7 @@ def process_files_from_sqs():
     retry_new_messages = 0
     # Reading messages from SQS
     response = read_sqs()
-    
+    total_files_processed = 0
     # IF messages exists in SQS for new files
     if response is not None and len(response.get('Messages',[]))>0:
         retry_new_messages = 1
@@ -218,19 +218,20 @@ def process_files_from_sqs():
             try:
                 load_file(file_bucket, file_key)
                 delete_sqs_message(sqs_queue_url, receipt_handle)
-                
+                total_files_processed += 1
             except FileFormatException as e:
                 file_move(file_bucket, file_key)
                 delete_sqs_message(sqs_queue_url, receipt_handle)
     if retry_new_messages == 1:
         print("Retrying for more messages.")
-        process_files_from_sqs()
-
+        total_files_processed+= process_files_from_sqs()
+    return total_files_processed
+    
 def main():        
     checkGlueJobStatus()
-    process_files_from_sqs()
+    total_files_processed = process_files_from_sqs()
 
-    print("Successfully completed processing files from SQS")
+    print("Successfully completed processing {} files from SQS".format(total_files_processed))
 # secret = get_secret(db_secret)
 main()
 job.commit()
