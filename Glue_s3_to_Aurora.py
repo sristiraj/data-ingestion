@@ -3,12 +3,11 @@ import boto3
 import time
 from retry import retry
 import json
+import datetime
 from botocore.exceptions import ClientError
-from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
+import pandas as pd
+import awswrangler as wr
 
 '''######################
 Set the glue parameters as per the parameters list below
@@ -23,24 +22,25 @@ Set the additional python module dependency ["retry"]
 GLUE_TIMEOUT = 30 # In Seconds
 REGION_NAME = "us-east-1"
 ## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'SQS_QUEUE_URL', 'QUARANTINE_LOCATION', "FILE_FORMAT", "FILE_DELIMITER", "FILE_HAS_HEADER", "FILE_SCHEMA", "TABLE_NAME", "DB_SECRET_NAME", "FILE_DATE_FORMAT", "FILE_TIMESTAMP_FORMAT"])
+print("Arguments:")
+print(sys.argv)
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'JOB_RUN_ID', 'SQS_QUEUE_URL', 'QUARANTINE_LOCATION', "FILE_FORMAT", "FILE_DELIMITER", "FILE_HAS_HEADER", "FILE_SCHEMA_PATH", "TABLE_NAME", "DB_SECRET_NAME", "FILE_DATE_FORMAT", "FILE_TIMESTAMP_FORMAT", "FILE_QUOTE_CHAR", "events"])
 
 sqs_queue_url = args.get("SQS_QUEUE_URL")
 s3_quarantine_loc = args.get("QUARANTINE_LOCATION")
 file_format = args.get("FILE_FORMAT")
 file_delimiter = args.get("FILE_DELIMITER",",")
 file_has_header = args.get("FILE_HAS_HEADER","yes")
-file_schema = args.get("FILE_SCHEMA")
+file_schema_path = args.get("FILE_SCHEMA_PATH")
 table_name = args.get("TABLE_NAME")
 db_secret = args.get("DB_SECRET_NAME")
 date_format = args.get("FILE_DATE_FORMAT")
 timestamp_format = args.get("FILE_TIMESTAMP_FORMAT")
-
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
+quote_char = args.get("FILE_QUOTE_CHAR")
+event = args.get("events",{})
+current_runid = args.get("JOB_RUN_ID","")
+print("event triggered: "+ event)
+print("internal run id: {}".format(current_runid))
 
 class FileFormatException(Exception):
     pass
@@ -89,21 +89,21 @@ def is_valid_s3_path(s3_path):
         
 def get_bucket_from_path(s3_path):
     if not is_valid_s3_path(s3_path):
-        print("S3 Path not in correct format. Use format s3://<bucket>/path")
-        raise ValueError("S3 Path not in correct format. Use format s3://<bucket>/path")
+        print("S3 Path not in correct format. Use format s3://<bucket>/<path>: {}", s3_path)
+        raise ValueError("S3 Path not in correct format. Use format s3://<bucket>/<path>: {}".format(s3_path))
         
     base_path = s3_path.replace("s3://","")
-    if len(base_path.replace("/")) < len(base_path):
+    if len(base_path.replace("/","")) < len(base_path):
         return base_path[:base_path.find("/")]
     else:
         return base_path
 
 def get_key_from_path(s3_path):
     if not is_valid_s3_path(s3_path):
-        print("S3 Path not in correct format. Use format s3://<bucket>/path")
-        raise ValueError("S3 Path not in correct format. Use format s3://<bucket>/path")
+        print("S3 Path not in correct format. Use format s3://<bucket>/<path>: {}", s3_path)
+        raise ValueError("S3 Path not in correct format. Use format s3://<bucket>/<path>: {}".format(s3_path))
     base_path = s3_path.replace("s3://","")
-    if len(base_path.replace("/")) < len(base_path):
+    if len(base_path.replace("/","")) < len(base_path):
         bucket = base_path[:base_path.find("/")]
         return base_path.replace("{}/".format(bucket),"")
     else:
@@ -113,10 +113,10 @@ def getJobName():
     return args["JOB_NAME"]
 
 def getJobCurrentRun(job_name):
-    return args["JOB_RUN_ID"]
+    return current_runid
 
 @retry(Exception, tries=3, delay=2)
-def checkGlueJobStatus():
+def checkPrevGlueJobRunningStatus():
     session = boto3.session.Session()
     glue_client = session.client('glue')
     try:
@@ -126,37 +126,61 @@ def checkGlueJobStatus():
         status_details = glue_client.get_job_runs(JobName=job_name, MaxResults=10)
         running_status = []
         for status in status_details.get("JobRuns",[]):
-            if status.get("JobRunState","UNKNOWN") in ["RUNNING","STARTING","WAITING"]:
+            run_id = status.get("Arguments",{}).get("--JOB_RUN_ID","UNKNOWN")
+            if status.get("JobRunState","UNKNOWN") in ["RUNNING","STARTING","WAITING"] and run_id!=current_run_id:
                 running_status.append(status)
                 
         #Only allow one run of glue job. For next job stop the processing
-        if running_status is not None and len(running_status)>=2 and running_status[0].get("Id") != current_run_id:
-            glue_client.batch_stop_job_run(JobName=job_name, JobRunIds=[current_run_id])
+        if running_status is not None and len(running_status)>1:
+            return True
+        else:
+            return False
         
     except Exception as e:
         raise e
-
+        
+def read_s3_object(bucket, key):
+    s3 = boto3.resource('s3')
+    obj = s3.Object(bucket, key)
+    return obj.get()['Body'].read().decode('utf-8') 
+    
+def get_colnames_schema_file():
+    bucket = get_bucket_from_path(file_schema_path)
+    key = get_key_from_path(file_schema_path)
+    schema_str = read_s3_object(bucket, key)
+    schema_arr = schema_str.split(",")
+    colnames = [c.strip(" ").split(" ")[0] for c in schema_arr if len(c.strip(" ").split(" "))>=2]
+    return colnames
+    
 def write_file(df):
-    df.write.format("parquet").mode("append").save(s3_quarantine_loc+"data")
+    wr.s3.to_parquet(df, s3_quarantine_loc+"data/file.parquet")
     
 def load_file(file_bucket, file_key):
-    file_header = True if file_has_header.lower() == "yes" else False
+    print("Started loading file s3://{}/{}".format(file_bucket, file_key))
+    file_header = 1 if file_has_header.lower() == "yes" else 0
+    colnames = get_colnames_schema_file()
+    f = lambda s: datetime.datetime.strptime(s,date_format)
     try:
-        df = spark.read.format(file_format).\
-            option("header",file_header).\
-            option("dateFormat",date_format).\
-            option("timestampNTZFormat", timestamp_format).\
-            schema(file_schema).\
-            option("mode", "FAILFAST").load()
+        df = pd.read_csv("s3://{}/{}".format(file_bucket, file_key),\
+            sep=file_delimiter,\
+            na_values=['null', 'none'],\
+            skip_blank_lines=True,\
+            engine="python",\
+            names=colnames,\
+            header=0,\
+            skiprows=file_header,\
+            date_parser=f,\
+            quotechar=quote_char)
+            
     except Exception as e:
         print("Error: Reading file from s3://{}/{}".format(file_bucket, file_key))
-        raise FileFormatException("Error reading file: "+str(e)
+        raise FileFormatException("Error reading file "+str(e))
         
     write_file(df)
 
 @retry(Exception, tries=2, delay=10)    
-def s3_file_move(file_bucket, file_key, target_path):
-    s3_resource = boto3.client('s3')
+def s3_file_move_to_quarantine(file_bucket, file_key, target_path):
+    client = boto3.client('s3')
     target_bucket = get_bucket_from_path(target_path)
     target_key = get_key_from_path(target_path)
     
@@ -196,47 +220,50 @@ def read_sqs():
     )
     return response
     
-def process_files_from_sqs():
-    '''Read SQS and process files based on put object event from S3 bucket'''
-    retry_new_messages = 0
-    print("Start reading SQS for messages")
+def process_files_from_sqs_message(event):
+    '''Process SQS message and files based on put object event from S3 bucket'''
+    
+    print("Start process SQS  message")
     # Reading messages from SQS
-    response = read_sqs()
+    
     total_files_processed = 0
     
     # IF messages exists in SQS for new files
-    if response is not None and len(response.get('Messages',[]))>0:
+    if event is not None:
         
-        messages = response['Messages']
+        messages = [event]
         file_bucket = ""
         file_key = ""
         for message in messages:
-            # Retry for new SQS message at the end of messages retrieved in the sqs receive message call.
-            retry_new_messages = 1
             print(message)
             print("========================")
-
+            mesg = json.loads(message)["Records"][0]
+            
             # print(message["Body"]["detail"]["bucket"])
-            file_bucket = json.loads(message["Body"])["detail"]["bucket"]["name"]
-            file_key = json.loads(message["Body"])["detail"]["object"]["key"]
-            receipt_handle = message['ReceiptHandle']
+            file_bucket = json.loads(mesg['body'])["detail"]["bucket"]["name"]
+            file_key = json.loads(mesg['body'])["detail"]["object"]["key"]
+            receipt_handle = mesg['receiptHandle']
             try:
                 load_file(file_bucket, file_key)
                 delete_sqs_message(sqs_queue_url, receipt_handle)
-                total_files_processed += 1
+                
             except FileFormatException as e:
-                file_move(file_bucket, file_key)
+                s3_file_move_to_quarantine(file_bucket, file_key, s3_quarantine_loc)
                 delete_sqs_message(sqs_queue_url, receipt_handle)
-    if retry_new_messages == 1:
-        print("Retrying for more messages.")
-        total_files_processed+= process_files_from_sqs()
-    return total_files_processed
+    
+    return (file_bucket, file_key)
     
 def main():        
-    checkGlueJobStatus()
-    total_files_processed = process_files_from_sqs()
+    while(checkPrevGlueJobRunningStatus()):
+        print("Waiting for glue job to complete.")
+        time.sleep(120)
+    file_bucket, file_key = process_files_from_sqs_message(event)
 
-    print("Successfully completed processing {} files from SQS".format(total_files_processed))
+    print("Successfully completed processing s3://{}/{} file from SQS".format(file_bucket, file_key))
+#============================
+#Test code: Comment after testing
+# checkPrevGlueJobRunningStatus()
+# load_file("sr-eb-bucket","TestFile.csv")
+#============================
 # secret = get_secret(db_secret)
 main()
-job.commit()
