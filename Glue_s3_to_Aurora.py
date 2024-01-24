@@ -144,13 +144,13 @@ def load_file(file_bucket, file_key):
     try:
         df = spark.read.format(file_format).\
             option("header",file_header).\
-            option("dateFormat","date_format").\
+            option("dateFormat",date_format).\
             option("timestampNTZFormat", timestamp_format).\
             schema(file_schema).\
             option("mode", "FAILFAST").load()
     except Exception as e:
         print("Error: Reading file from s3://{}/{}".format(file_bucket, file_key))
-        raise FileFormatException("Error reading file")
+        raise FileFormatException("Error reading file: "+str(e)
         
     write_file(df)
 
@@ -206,11 +206,13 @@ def process_files_from_sqs():
     
     # IF messages exists in SQS for new files
     if response is not None and len(response.get('Messages',[]))>0:
-        retry_new_messages = 1
+        
         messages = response['Messages']
         file_bucket = ""
         file_key = ""
         for message in messages:
+            # Retry for new SQS message at the end of messages retrieved in the sqs receive message call.
+            retry_new_messages = 1
             print(message)
             print("========================")
 
