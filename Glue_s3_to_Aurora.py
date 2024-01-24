@@ -13,6 +13,7 @@ from awsglue.job import Job
 '''######################
 Set the glue parameters as per the parameters list below
 Set the glue retry limit to 0.
+Set the glue concurrent run to 1.
 Set the glue timeout to a proper value (30 minutes)
 Change the timeout value in code for const variable GLUE_TIMEOUT
 Set the additional python module dependency ["retry"]
@@ -198,9 +199,11 @@ def read_sqs():
 def process_files_from_sqs():
     '''Read SQS and process files based on put object event from S3 bucket'''
     retry_new_messages = 0
+    print("Start reading SQS for messages")
     # Reading messages from SQS
     response = read_sqs()
     total_files_processed = 0
+    
     # IF messages exists in SQS for new files
     if response is not None and len(response.get('Messages',[]))>0:
         retry_new_messages = 1
@@ -210,7 +213,7 @@ def process_files_from_sqs():
         for message in messages:
             print(message)
             print("========================")
-            print(message["Body"])
+
             # print(message["Body"]["detail"]["bucket"])
             file_bucket = json.loads(message["Body"])["detail"]["bucket"]["name"]
             file_key = json.loads(message["Body"])["detail"]["object"]["key"]
