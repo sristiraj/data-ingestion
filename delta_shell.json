@@ -1,0 +1,113 @@
+{
+	"jobConfig": {
+		"name": "delta_shell",
+		"description": "",
+		"role": "arn:aws:iam::541627396844:role/RRSSR27_AWS_APP01_STTM_DYNAMO_ACCESS",
+		"command": "pythonshell",
+		"version": "3.0",
+		"runtime": null,
+		"workerType": null,
+		"numberOfWorkers": null,
+		"maxCapacity": 0.0625,
+		"maxRetries": 0,
+		"timeout": 2880,
+		"maxConcurrentRuns": 1,
+		"security": "none",
+		"scriptName": "delta_shell.py",
+		"scriptLocation": "s3://aws-glue-assets-541627396844-us-east-1/scripts/",
+		"language": "python-3.9",
+		"spark": false,
+		"jobParameters": [
+			{
+				"key": "--DB_SECRET_NAME",
+				"value": "secret",
+				"existing": false
+			},
+			{
+				"key": "--FILE_DATE_FORMAT",
+				"value": "%Y-%m-%d",
+				"existing": false
+			},
+			{
+				"key": "--FILE_DELIMITER",
+				"value": ",",
+				"existing": false
+			},
+			{
+				"key": "--FILE_FORMAT",
+				"value": "csv",
+				"existing": false
+			},
+			{
+				"key": "--FILE_HAS_HEADER",
+				"value": "yes",
+				"existing": false
+			},
+			{
+				"key": "--FILE_QUOTE_CHAR",
+				"value": "\"",
+				"existing": false
+			},
+			{
+				"key": "--FILE_SCHEMA_PATH",
+				"value": "s3://srrawbucket001/config/tbl1.ddl",
+				"existing": false
+			},
+			{
+				"key": "--FILE_TIMESTAMP_FORMAT",
+				"value": "%Y-%m-%d",
+				"existing": false
+			},
+			{
+				"key": "--JOB_NAME",
+				"value": "delta_shell",
+				"existing": false
+			},
+			{
+				"key": "--JOB_RUN_ID",
+				"value": " ",
+				"existing": false
+			},
+			{
+				"key": "--QUARANTINE_LOCATION",
+				"value": "s3://srrawbucket001/quarantine/",
+				"existing": false
+			},
+			{
+				"key": "--SQS_QUEUE_URL",
+				"value": "https://sqs.us-east-1.amazonaws.com/541627396844/Logging-Queue-dev",
+				"existing": false
+			},
+			{
+				"key": "--TABLE_NAME",
+				"value": "tb",
+				"existing": false
+			},
+			{
+				"key": "--additional-python-modules",
+				"value": "retry, pyscopg2",
+				"existing": false
+			},
+			{
+				"key": "--events",
+				"value": " ",
+				"existing": false
+			}
+		],
+		"tags": [],
+		"jobMode": "DEVELOPER_MODE",
+		"createdOn": "2024-01-24T10:40:39.885Z",
+		"developerMode": true,
+		"connectionsList": [],
+		"temporaryDirectory": "s3://aws-glue-assets-541627396844-us-east-1/temporary/",
+		"glueHiveMetastore": true,
+		"etlAutoTuning": false,
+		"pythonShellPrebuiltLibraryOption": "analytics",
+		"flexExecution": false,
+		"minFlexWorkers": null,
+		"pythonPath": null,
+		"etlAutoScaling": false
+	},
+	"hasBeenSaved": false,
+	"script": "import sys\nimport boto3\nimport time\nfrom retry import retry\nimport json\nimport datetime\nfrom botocore.exceptions import ClientError\nfrom awsglue.utils import getResolvedOptions\nimport pandas as pd\nimport awswrangler as wr\nimport psycopg2\nfrom psycopg2 import OperationalError, errorcodes, errors\n\n'''######################\nSet the glue parameters as per the parameters list below\nSet the glue retry limit to 0.\nSet the glue concurrent run to 1.\nSet the glue timeout to a proper value (30 minutes)\nChange the timeout value in code for const variable GLUE_TIMEOUT\nSet the additional python module dependency [\"retry\"]\n\n######################'''\n\nGLUE_TIMEOUT = 30 # In Seconds\nREGION_NAME = \"us-east-1\"\n## @params: [JOB_NAME]\nprint(\"Arguments:\")\nprint(sys.argv)\nargs = getResolvedOptions(sys.argv, ['JOB_NAME', 'JOB_RUN_ID', 'SQS_QUEUE_URL', 'QUARANTINE_LOCATION', \"FILE_FORMAT\", \"FILE_DELIMITER\", \"FILE_HAS_HEADER\", \"FILE_SCHEMA_PATH\", \"TABLE_NAME\", \"DB_SECRET_NAME\", \"FILE_DATE_FORMAT\", \"FILE_TIMESTAMP_FORMAT\", \"FILE_QUOTE_CHAR\", \"events\"])\n\nsqs_queue_url = args.get(\"SQS_QUEUE_URL\")\ns3_quarantine_loc = args.get(\"QUARANTINE_LOCATION\")\nfile_format = args.get(\"FILE_FORMAT\")\nfile_delimiter = args.get(\"FILE_DELIMITER\",\",\")\nfile_has_header = args.get(\"FILE_HAS_HEADER\",\"yes\")\nfile_schema_path = args.get(\"FILE_SCHEMA_PATH\")\ntable_name = args.get(\"TABLE_NAME\")\ndb_secret = args.get(\"DB_SECRET_NAME\")\ndate_format = args.get(\"FILE_DATE_FORMAT\")\ntimestamp_format = args.get(\"FILE_TIMESTAMP_FORMAT\")\nquote_char = args.get(\"FILE_QUOTE_CHAR\")\nevent = args.get(\"events\",{})\ncurrent_runid = args.get(\"JOB_RUN_ID\",\"\")\nprint(\"event triggered: \"+ event)\nprint(\"internal run id: {}\".format(current_runid))\n\nclass FileFormatException(Exception):\n    pass\n\ndef get_secret(secret_name):\n    # secret_name = \"MySecretName\"\n    region_name = REGION_NAME\n\n    session = boto3.session.Session()\n    client = session.client(\n        service_name='secretsmanager',\n        region_name=region_name,\n    )\n\n    try:\n        get_secret_value_response = client.get_secret_value(\n            SecretId=secret_name\n        )\n    except ClientError as e:\n        if e.response['Error']['Code'] == 'ResourceNotFoundException':\n            print(\"The requested secret \" + secret_name + \" was not found\")\n        elif e.response['Error']['Code'] == 'InvalidRequestException':\n            print(\"The request was invalid due to:\", e)\n        elif e.response['Error']['Code'] == 'InvalidParameterException':\n            print(\"The request had invalid params:\", e)\n        elif e.response['Error']['Code'] == 'DecryptionFailure':\n            print(\"The requested secret can't be decrypted using the provided KMS key:\", e)\n        elif e.response['Error']['Code'] == 'InternalServiceError':\n            print(\"An error occurred on service side:\", e)\n        raise e\n    else:\n        # Secrets Manager decrypts the secret value using the associated KMS CMK\n        # Depending on whether the secret was a string or binary, only one of these fields will be populated\n        if 'SecretString' in get_secret_value_response:\n            text_secret_data = get_secret_value_response['SecretString']\n        else:\n            binary_secret_data = get_secret_value_response['SecretBinary']\n    return  text_secret_data   \n\n        \ndef is_valid_s3_path(s3_path):\n    if s3_path.startswith(\"s3://\"):\n        return True\n    else:\n        return False\n        \ndef get_bucket_from_path(s3_path):\n    if not is_valid_s3_path(s3_path):\n        print(\"S3 Path not in correct format. Use format s3://<bucket>/<path>: {}\", s3_path)\n        raise ValueError(\"S3 Path not in correct format. Use format s3://<bucket>/<path>: {}\".format(s3_path))\n        \n    base_path = s3_path.replace(\"s3://\",\"\")\n    if len(base_path.replace(\"/\",\"\")) < len(base_path):\n        return base_path[:base_path.find(\"/\")]\n    else:\n        return base_path\n\ndef get_key_from_path(s3_path):\n    if not is_valid_s3_path(s3_path):\n        print(\"S3 Path not in correct format. Use format s3://<bucket>/<path>: {}\", s3_path)\n        raise ValueError(\"S3 Path not in correct format. Use format s3://<bucket>/<path>: {}\".format(s3_path))\n    base_path = s3_path.replace(\"s3://\",\"\")\n    if len(base_path.replace(\"/\",\"\")) < len(base_path):\n        bucket = base_path[:base_path.find(\"/\")]\n        return base_path.replace(\"{}/\".format(bucket),\"\")\n    else:\n        return None\n        \ndef getJobName():\n    return args[\"JOB_NAME\"]\n\ndef getJobCurrentRun(job_name):\n    return current_runid\n\n@retry(Exception, tries=3, delay=2)\ndef checkPrevGlueJobRunningStatus():\n    session = boto3.session.Session()\n    glue_client = session.client('glue')\n    try:\n        job_name = getJobName()\n        current_run_id = getJobCurrentRun(job_name)\n        print(\"Current run ID: {}\".format(current_run_id))\n        status_details = glue_client.get_job_runs(JobName=job_name, MaxResults=10)\n        running_status = []\n        for status in status_details.get(\"JobRuns\",[]):\n            run_id = status.get(\"Arguments\",{}).get(\"--JOB_RUN_ID\",\"UNKNOWN\")\n            if status.get(\"JobRunState\",\"UNKNOWN\") in [\"RUNNING\",\"STARTING\",\"WAITING\"] and run_id!=current_run_id:\n                running_status.append(status)\n                \n        #Only allow one run of glue job. For next job stop the processing\n        if running_status is not None and len(running_status)>1:\n            return True\n        else:\n            return False\n        \n    except Exception as e:\n        raise e\n        \ndef read_s3_object(bucket, key):\n    s3 = boto3.resource('s3')\n    obj = s3.Object(bucket, key)\n    return obj.get()['Body'].read().decode('utf-8') \n    \ndef get_colnames_schema_file():\n    bucket = get_bucket_from_path(file_schema_path)\n    key = get_key_from_path(file_schema_path)\n    schema_str = read_s3_object(bucket, key)\n    schema_arr = schema_str.split(\",\")\n    colnames = [c.strip(\" \").split(\" \")[0] for c in schema_arr if len(c.strip(\" \").split(\" \"))>=2]\n    return colnames\n\n\ndef show_psycopg2_exception(err):\n    # get details about the exception\n    err_type, err_obj, traceback = sys.exc_info()\n    # get the line number when exception occured\n    line_n = traceback.tb_lineno\n    # print the connect() error\n    print (\"\\npsycopg2 ERROR:\", err, \"on line number:\", line_n)\n    print (\"psycopg2 traceback:\", traceback, \"-- type:\", err_type)\n    # psycopg2 extensions.Diagnostics object attribute\n    print (\"\\nextensions.Diagnostics:\", err.diag)\n    # print the pgcode and pgerror exceptions\n    print (\"pgerror:\", err.pgerror)\n    print (\"pgcode:\", err.pgcode, \"\\n\")\n\n\ndef connect(conn_params_dic):\n    conn = None\n    try:\n        print('Connecting to the PostgreSQL...........')\n        conn = psycopg2.connect(**conn_params_dic)\n        print(\"Connection successful..................\")\n\n    except OperationalError as err:\n        # passing exception to function\n        show_psycopg2_exception(err)\n        # set the connection to 'None' in case of error\n        conn = None\n\n    return conn\n\n# Define function using cursor.executemany() to insert the dataframe\ndef write_to_post_gres(datafrm, table):\n    secret = get_secret(db_secret)\n    \n    conn_params_dic = {\n    \"host\"      : secret[\"hostname\"],\n    \"database\"  : secret[\"database\"],\n    \"user\"      : secret[\"username\"],\n    \"password\"  : secret[\"password\"]\n    }\n\n    # Creating a list of tupples from the dataframe values\n    tpls = [tuple(x) for x in datafrm.to_numpy()]\n\n    # dataframe columns with Comma-separated\n    cols = ','.join(list(datafrm.columns))\n\n    # SQL query to execute\n    sql = \"INSERT INTO %s(%s) VALUES(%%s,%%s,%%s,%%s,%%s)\" % (table, cols)\n    cursor = conn.cursor()\n    try:\n        cursor.executemany(sql, tpls)\n        conn.commit()\n        print(\"Data inserted using execute_many() successfully...\")\n    except (Exception, psycopg2.DatabaseError) as err:\n        # pass exception to function\n        show_psycopg2_exception(err)\n        cursor.close()\n        \ndef write_file(df):\n    wr.s3.to_parquet(df, s3_quarantine_loc+\"data/file.parquet\")\n    \ndef load_file(file_bucket, file_key):\n    print(\"Started loading file s3://{}/{}\".format(file_bucket, file_key))\n    file_header = 1 if file_has_header.lower() == \"yes\" else 0\n    colnames = get_colnames_schema_file()\n    f = lambda s: datetime.datetime.strptime(s,date_format)\n    try:\n        df = pd.read_csv(\"s3://{}/{}\".format(file_bucket, file_key),\\\n            sep=file_delimiter,\\\n            na_values=['null', 'none'],\\\n            skip_blank_lines=True,\\\n            engine=\"python\",\\\n            names=colnames,\\\n            header=0,\\\n            skiprows=file_header,\\\n            date_parser=f,\\\n            quotechar=quote_char)\n            \n    except Exception as e:\n        print(\"Error: Reading file from s3://{}/{}\".format(file_bucket, file_key))\n        raise FileFormatException(\"Error reading file \"+str(e))\n        \n    write_file(df)\n\n@retry(Exception, tries=2, delay=10)    \ndef s3_file_move_to_quarantine(file_bucket, file_key, target_path):\n    client = boto3.client('s3')\n    target_bucket = get_bucket_from_path(target_path)\n    target_key = get_key_from_path(target_path)\n    \n    copy_source = {'Bucket': file_bucket, 'Key': file_key}\n    client.copy_object(Bucket = target_bucket, CopySource = copy_source, Key = target_key.rstrip(\"/\")+\"/\" + file_key)\n    client.delete_object(Bucket = file_bucket, Key = file_key)\n\n@retry(Exception, tries=2, delay=10)\ndef delete_sqs_message(sqs_queue_url, message_handle):\n    session = boto3.session.Session()\n    sqs = session.client('sqs')\n    try:\n        print(\"Deleting message with message handle {}\".format(message_handle))\n        # Delete received message from queue\n        sqs.delete_message(\n            QueueUrl=sqs_queue_url,\n            ReceiptHandle=message_handle\n        )\n    except Exception as e:\n        print(\"Error: Failed to delete processed file SQS message. Retrying...\")\n        raise e\n\ndef read_sqs():\n    session = boto3.session.Session()\n    sqs = session.client('sqs')\n    response = sqs.receive_message(\n        QueueUrl=sqs_queue_url,\n        AttributeNames=[\n            'SentTimestamp'\n        ],\n        MaxNumberOfMessages=10,\n        MessageAttributeNames=[\n            'All'\n        ],\n        VisibilityTimeout=GLUE_TIMEOUT, # Total estimated time to process files pertaining to SQS messages with S3 object paths. Use GLUE_TIMEOUT\n        WaitTimeSeconds=0\n    )\n    return response\n    \ndef process_files_from_sqs_message(event):\n    '''Process SQS message and files based on put object event from S3 bucket'''\n    \n    print(\"Start process SQS  message\")\n    # Reading messages from SQS\n    \n    total_files_processed = 0\n    \n    # IF messages exists in SQS for new files\n    if event is not None:\n        \n        messages = [event]\n        file_bucket = \"\"\n        file_key = \"\"\n        for message in messages:\n            print(message)\n            print(\"========================\")\n            mesg = json.loads(message)[\"Records\"][0]\n            \n            # print(message[\"Body\"][\"detail\"][\"bucket\"])\n            file_bucket = json.loads(mesg['body'])[\"detail\"][\"bucket\"][\"name\"]\n            file_key = json.loads(mesg['body'])[\"detail\"][\"object\"][\"key\"]\n            receipt_handle = mesg['receiptHandle']\n            try:\n                load_file(file_bucket, file_key)\n                delete_sqs_message(sqs_queue_url, receipt_handle)\n                \n            except FileFormatException as e:\n                s3_file_move_to_quarantine(file_bucket, file_key, s3_quarantine_loc)\n                delete_sqs_message(sqs_queue_url, receipt_handle)\n    \n    return (file_bucket, file_key)\n    \ndef main():        \n    while(checkPrevGlueJobRunningStatus()):\n        print(\"Waiting for glue job to complete.\")\n        time.sleep(120)\n    file_bucket, file_key = process_files_from_sqs_message(event)\n\n    print(\"Successfully completed processing s3://{}/{} file from SQS\".format(file_bucket, file_key))\n#============================\n#Test code: Comment after testing\n# checkPrevGlueJobRunningStatus()\n# load_file(\"sr-eb-bucket\",\"TestFile.csv\")\n#============================\n# secret = get_secret(db_secret)\nmain()"
+}
