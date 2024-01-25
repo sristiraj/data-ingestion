@@ -80,8 +80,8 @@ def get_secret(secret_name):
             text_secret_data = get_secret_value_response['SecretString']
         else:
             binary_secret_data = get_secret_value_response['SecretBinary']
+    return  text_secret_data   
 
-        # Your code goes here.
         
 def is_valid_s3_path(s3_path):
     if s3_path.startswith("s3://"):
@@ -187,11 +187,13 @@ def connect(conn_params_dic):
 
 # Define function using cursor.executemany() to insert the dataframe
 def write_to_post_gres(datafrm, table):
+    secret = get_secret(db_secret)
+    
     conn_params_dic = {
-    "host"      : "localhost",
-    "database"  : "irisdb",
-    "user"      : "postgres",
-    "password"  : "Passw0rd"
+    "host"      : secret["hostname"],
+    "database"  : secret["database"],
+    "user"      : secret["username"],
+    "password"  : secret["password"]
     }
 
     # Creating a list of tupples from the dataframe values
