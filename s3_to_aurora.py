@@ -28,6 +28,9 @@ print("Arguments:")
 print(sys.argv)
 args = getResolvedOptions(sys.argv, ['JOB_NAME', 'JOB_RUN_ID', 'SQS_QUEUE_URL', 'QUARANTINE_LOCATION', "FILE_FORMAT", "FILE_DELIMITER", "FILE_HAS_HEADER", "FILE_SCHEMA_PATH", "TABLE_NAME", "DB_SECRET_NAME", "FILE_DATE_FORMAT", "FILE_TIMESTAMP_FORMAT", "FILE_QUOTE_CHAR", "events"])
 
+postgres_to_np_dtype = {"bigint":"int", "bit":"bool","boolean":"bool","bytea":"bytes","date":"str","double":"float","integer":"int","numeric":"float","smallint":"int","time":"str","timestamp":"str","str":"str","string":"str","varchar":"str","text":"str","decimal":"float"} 
+
+
 sqs_queue_url = args.get("SQS_QUEUE_URL")
 s3_quarantine_loc = args.get("QUARANTINE_LOCATION")
 file_format = args.get("FILE_FORMAT")
@@ -46,6 +49,7 @@ print("internal run id: {}".format(current_runid))
 
 class FileFormatException(Exception):
     pass
+
 
 def get_secret(secret_name):
     # secret_name = "MySecretName"
@@ -154,7 +158,27 @@ def get_colnames_schema_file():
     colnames = [c.strip(" ").split(" ")[0] for c in schema_arr if len(c.strip(" ").split(" "))>=2]
     return colnames
 
+    
+def get_schema_from_file():
+    bucket = get_bucket_from_path(file_schema_path)
+    key = get_key_from_path(file_schema_path)
+    schema_str = read_s3_object(bucket, key)
+    schema_arr = schema_str.split(",")    
+    colnames = {}
+    for c in schema_arr:
+        colnames[c.strip(" ").split(" ")[0]] = c.strip(" ").split(" ")[1]
+    return colnames
 
+def get_postgres_to_np_dtype(postgres_dtype):
+    if postgres_dtype.__contains__("("):
+        postgres_dtype = postgres_dtype[:postgres_dtype.find("(")].lower()
+    return postgres_to_np_dtype.get(postgres_dtype)  
+    
+def get_np_schema_from_postgres(postgres_dict):
+    for k,v in postgres_dict.items():
+        postgres_dict[k] = get_postgres_to_np_dtype(v)
+    return postgres_dict
+    
 def show_psycopg2_exception(err):
     # get details about the exception
     err_type, err_obj, traceback = sys.exc_info()
@@ -221,6 +245,8 @@ def load_file(file_bucket, file_key):
     print("Started loading file s3://{}/{}".format(file_bucket, file_key))
     file_header = 1 if file_has_header.lower() == "yes" else 0
     colnames = get_colnames_schema_file()
+    sch_dtypes = get_schema_from_file()
+    np_dtypes = get_np_schema_from_postgres(sch_dtypes)
     f = lambda s: datetime.datetime.strptime(s,date_format)
     try:
         df = pd.read_csv("s3://{}/{}".format(file_bucket, file_key),\
@@ -231,6 +257,7 @@ def load_file(file_bucket, file_key):
             names=colnames,\
             header=0,\
             skiprows=file_header,\
+            dtype=np_dtypes,\
             date_parser=f,\
             quotechar=quote_char)
             
