@@ -1,0 +1,22 @@
+def cleanse_data(bdata, encoding):
+
+    names = ["id","name","sal","dt"]
+    dtypes = {"id":"int","name":"str","sal":"float","dt":"date"}
+    tpl = []
+    tpls =[]
+    for d in bdata:
+        c = d.decode(encoding).split(",")
+        tpl=[]
+        for idx, k in enumerate(c):
+            col = names[idx]
+            dtype = dtypes[col]
+            if idx == len(c)-1:
+                k = k.rstrip("\n")
+            if k == '':
+                k = None
+                tpl.append(k)
+            else:
+                tpl.append(k)       
+
+        tpls.append(tuple(tpl))
+    return tpls
