@@ -1,0 +1,9 @@
+checks for auth_permission:
+  - row_chk > 0:
+        row_chk query: |
+            SELECT COUNT(*) FROM auth_permission
+  - failed rows:
+        name: failed rows for sample
+        fail query: |
+            select * from auth_permission where length(codename) <10  
+  - duplicate_count(id) = 0

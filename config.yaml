@@ -1,0 +1,9 @@
+data_source mydb:
+  type: postgres
+  connection:
+    host: hh-pgsql-public.ebi.ac.uk
+    port: '5432'
+    username: reader
+    password: NWDMCE5xdipIjRrp
+    database: pfmegrnargs
+    schema: rnacen
