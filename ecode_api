@@ -1,0 +1,60 @@
+import json
+import logging
+import boto3
+import botocore
+from botocore.exceptions import ClientError
+import os
+
+REGION = os.environ.get("AWS_REGION","us-east-1")
+URL_EXPIRY = 60
+log = logging.getLogger()
+
+def getS3Path(code: str):
+    return  ("aws-athena-query-results-bucket-sales", "sample/test.pdf")
+    
+def create_presigned_url(bucket_name, object_name, fields=None, conditions=None, expiration=URL_EXPIRY):
+
+    # Choose AWS CLI profile, If not mentioned, it would take default
+    session = boto3.session.Session()
+
+    # Generate a presigned URL for the S3 object
+    s3_client = session.client('s3',region_name=REGION,config=boto3.session.Config(signature_version='s3v4',))
+    print("Generating ")
+    try:
+        response = s3_client.generate_presigned_post(bucket_name, object_name, Fields=fields, Conditions=conditions, ExpiresIn=expiration)
+    except Exception as e:
+        print(e)
+        log.error(e)
+        return "Error"
+
+    return response
+
+
+def lambda_handler(event, context):
+    print(event)
+    print(context)
+    queries = event.get("queryStringParameters",{})
+    if queries != {}:
+        try:
+            try:
+                ecode = queries["ecode"]
+            except Exception as e:
+                response = {"Error":f"Pass ecode in query string {str(e)}"}
+                raise e
+            try:
+                bucket, key = getS3Path(ecode)
+            except Exception as e:
+                response = {"Error":str(e)}
+                raise e
+            try:
+                content_type = "application/octet-stream"
+                response = create_presigned_url(bucket,key,fields={"Content-Type": content_type}, conditions=[["starts-with", "$Content-Type", content_type]], expiration=URL_EXPIRY)
+                resp = {"statusCode": 200, 'body':json.dumps(response)}
+            except Exception as e:
+                response = {"Error":str(e)}
+                raise e
+        except Exception as e:
+            resp = {"statusCode": 400, 'body':json.dumps(response)}
+    else:
+        resp =  {"statusCode": 400, 'body':json.dumps({"Error":"Pass ecode in query string"})}
+    return resp
